@@ -5,6 +5,13 @@
   <input type="submit" name="" value="Tweet">
 </form>
 
+<div class="">
+  <h2>Username: {{username}}</h2>
+  <h2>Tweets: {{numTweets}}</h2>
+  <h2>Following: {{numFollowing}}</h2>
+  <h2>Followers: {{numFollowers}}</h2>
+</div>
+
 <ul ng-repeat="tweet in allTweets">
   <li><strong>{{tweet.username}}</strong> tweeted: "{{tweet.tweet}}"</li>
 </ul>

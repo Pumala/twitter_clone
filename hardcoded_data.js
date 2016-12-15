@@ -3,31 +3,31 @@
 // ********************************
 
 var user1 = new User({
-  username: 'IAmLyn',
+  _id: 'IAmLyn',
   password: '12345',
-  following: [],
-  followers: []
+  following: ['IAmDom'],
+  followers: ['funkyClam']
 });
 
 user1.save();
 
 var user2 = new User({
-  username: 'IAmDom',
+  _id: 'IAmDom',
   password: 'abcde',
-  following: [],
-  followers: []
+  following: ['funkyClam'],
+  followers: ['funkyClam']
 });
 
 user2.save();
 
-var user1 = new User({
-  username: 'funkyClam',
+var user11 = new User({
+  _id: 'funkyClam',
   password: '123funkyclam',
-  following: [],
+  following: ['IAmDom', 'funkyClam'],
   followers: []
 });
 
-user1.save();
+user11.save();
 
 var user2 = new User({
   username: 'jumpinLollies',
@@ -63,8 +63,7 @@ user4.save();
 var tweet1 = new Tweet({
   tweet: 'See the monkey sleeping in the tree?',
   date: Date.now(),
-  username: 'funkyClam',
-  userId: "5851a9788626123190ecbcc0"
+  username: 'funkyClam'
 });
 
 tweet1.save();
@@ -72,8 +71,7 @@ tweet1.save();
 var tweet2 = new Tweet({
   tweet: 'Wake up the rooster!!',
   date: Date.now(),
-  username: 'monkeySause',
-  userId: "5851a9788626123190ecbcc2"
+  username: 'funkyClam'
 });
 
 tweet2.save();
@@ -81,8 +79,7 @@ tweet2.save();
 var tweet3 = new Tweet({
   tweet: 'Cha cha bing bang kooky!',
   date: Date.now(),
-  username: 'koalaMee',
-  userId: "5851a9788626123190ecbcc3"
+  username: 'IAmDom'
 });
 
 tweet3.save();
@@ -90,8 +87,7 @@ tweet3.save();
 var tweet4 = new Tweet({
   tweet: 'Run in circles til\' you pass out!!',
   date: Date.now(),
-  username: 'jumpinLollies',
-  userId: "5851a9788626123190ecbcc1"
+  username: 'IAmLyn'
 });
 
 tweet4.save();
@@ -99,8 +95,7 @@ tweet4.save();
 var tweet5 = new Tweet({
   tweet: 'Foaming at the mouth all day long!',
   date: Date.now(),
-  username: 'jumpinLollies',
-  userId: "5851a9788626123190ecbcc1"
+  username: 'IAmDom'
 });
 
 tweet5.save();
