@@ -57,10 +57,10 @@ app.get('/timeline', function(request, response) {
 // ********************************
 //          USER TIMELINE/PROFILE
 // *******************************
-app.get('/profile', function(request, response) {
+app.get('/profile/:username', function(request, response) {
 
-  // hard code IAmDom's _id
-  var user_id = "IAmDom";
+  console.log('PROFILE:::', request.params);
+  var user_id = request.params.username;
 
   User.findOne({ _id: user_id})
     .then(function(userInfo) {
@@ -130,7 +130,7 @@ app.get('/profile', function(request, response) {
 // ********************************
 //          USER TIMELINE/PROFILE
 // *******************************
-app.put('/newtweet', function(request, response) {
+app.post('/newtweet', function(request, response) {
 
   var userTweet = request.body.username;
   var newTweet = request.body.newTweet;
@@ -149,7 +149,7 @@ app.put('/newtweet', function(request, response) {
 
 });
 
-app.put('/api/signup', function(request, response) {
+app.post('/api/signup', function(request, response) {
 
   var username = request.body.username;
   var password = request.body.password;

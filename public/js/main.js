@@ -13,7 +13,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
   })
   .state({
     name: "profile",
-    url: "/profile",
+    url: "/profile/{username}",
     templateUrl: "templates/user_profile.html",
     controller: "UserController"
   })
@@ -39,7 +39,15 @@ app.config(function($stateProvider, $urlRouterProvider) {
 app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   var service = {};
 
+  // set it to cookieData if it exists, else null
+  $rootScope.factoryCookieData = $cookies.getObject('cookieData') ? $cookies.getObject('cookieData') : null;
 
+  // check if user is logged in
+  if ($rootScope.factoryCookieData) {
+    // if so, then reassign the $rootScope variables
+    $rootScope.rootUsername = $cookies.getObject('cookieData').username;
+    $rootScope.rootToken = $cookies.getObject('cookieData').token;
+  }
 
   service.allTweets = function() {
     var url = '/timeline';
@@ -49,8 +57,9 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     });
   }
 
-  service.userProfile = function() {
-    var url = '/profile';
+  service.userProfile = function(username) {
+    console.log('user anyone??', username);
+    var url = '/profile/' + username;
     return $http({
       method: 'GET',
       url: url
@@ -60,7 +69,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   service.addNewTweet = function(username, newTweet) {
     var url = '/newtweet';
     return $http({
-      method: 'PUT',
+      method: 'POST',
       url: url,
       data: {
         username: username,
@@ -72,7 +81,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   service.submitNewSignUp = function(signupInfo) {
     var url = '/api/signup';
     return $http({
-      method: 'PUT',
+      method: 'POST',
       url: url,
       data: signupInfo
     })
@@ -143,8 +152,8 @@ app.controller('LoginController', function($scope, $state, $cookies, $rootScope,
 
         $cookies.putObject('cookieData', userInfo)
         // store user login infor in $rootScope variables
-        $rootScope.username = userInfo.username;
-        $rootScope.username = userInfo.password;
+        $rootScope.rootUsername = userInfo.username;
+        $rootScope.rootToken = userInfo.token;
         $state.go('home');
         // console.log('Random token and username:', userInfo);
 
@@ -157,7 +166,7 @@ app.controller('LoginController', function($scope, $state, $cookies, $rootScope,
 
 });
 
-app.controller('UserController', function($scope, TwitterFactory, $state) {
+app.controller('UserController', function($scope, TwitterFactory, $state, $rootScope) {
 
   $scope.addTweet = function(newTweet) {
     TwitterFactory.addNewTweet($scope.username, newTweet)
@@ -170,7 +179,7 @@ app.controller('UserController', function($scope, TwitterFactory, $state) {
     });
   }
 
-  TwitterFactory.userProfile()
+  TwitterFactory.userProfile($rootScope.rootUsername)
     .success(function(allTweets) {
       console.log('profile tweets coming in!!::', allTweets);
       console.log('here is EVERYTHING COMING for you:::', allTweets.allTweets);
