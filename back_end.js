@@ -32,9 +32,9 @@ const Tweet = mongoose.model('Tweet', {
 });
 
 // come back to redirect
-app.get('/', function(request, response) {
-  response.redirect('http://google.com');
-})
+// app.get('/', function(request, response) {
+//   response.redirect('http://google.com');
+// })
 
 // ********************************
 //          WORLD TIMELINE
@@ -93,8 +93,6 @@ app.get('/profile/:username', function(request, response) {
     });
 
 });
-
-
 
 // WORKS
 // // ********************************
@@ -210,6 +208,54 @@ app.put('/api/login', function(request, response) {
     })
 
 });
+
+app.put('/api/follow', function(request, response) {
+
+  var user_id = request.body.user_id;
+  var whoUserFollows = request.body.whoUserFollows;
+
+  // make a promise => grab 2 different values
+  // 1) find current User info
+  // 2) find the info of the user that the current User is following
+  bluebird.all([ User.findOne({ _id: user_id}), User.findOne({ _id: whoUserFollows})])
+    .spread(function(userInfo, followingInfo) {
+      // console.log('USER INFO:', userInfo);
+      // console.log('FOLLOWING INFO:', followingInfo);
+
+      // modify the current User's following array to include the new user he is following
+      var following = userInfo.following.concat([whoUserFollows]);
+      // modify the user's (who the current User is following) followers
+      // add the current user to his followers array
+      var followers = followingInfo.followers.concat([user_id]);
+
+      return [ User.update({
+          _id: user_id
+        }, {
+          $set: {
+            following
+          }
+        }), User.update({
+          _id: whoUserFollows
+        }, {
+          $set: {
+            followers
+          }
+        })
+      ]
+    })
+    .spread(function(following, follower) {
+      // console.log('it was a success!!');
+      // console.log('FOLOWING:', following);
+      // console.log('FOLOWerrrr:', follower);
+      return response.json({
+        message: 'it was a success following!!'
+      })
+    })
+    .catch(function(err) {
+      console.log('encountered err following!!!', err.message);
+    });
+
+})
 
 app.listen(3000, function() {
   console.log('The server has started to listen........');

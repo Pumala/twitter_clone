@@ -30,8 +30,8 @@
                         <li><a ng-if="rootUsername">Welcome {{rootUsername}}!</a></li>
                         <li><a ng-if="!rootUsername" ui-sref="signup">Sign up</a></li>
                         <li><a ng-if="!rootUsername" ui-sref="login">Log in</a></li>
-                        <li><a ng-if="rootUsername" ui-sref="profile">Profile</a></li>
-                        <li><a ng-if="rootUsername" ng-click="logout()">Logout</a></li>
+                        <li><a ng-if="rootUsername" ui-sref="profile({username: rootUsername})">Profile</a></li>
+                        <li><a ng-if="rootUsername" ng-click="rootLogout()">Logout</a></li>
                     </ul>
                 </div>
                 <!-- /.navbar-collapse -->

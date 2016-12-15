@@ -49,6 +49,18 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     $rootScope.rootToken = $cookies.getObject('cookieData').token;
   }
 
+  // LOGOUT
+  $rootScope.rootLogout = function() {
+    // reset all the $rootScope variables to null
+    $rootScope.rootUsername = null;
+    $rootScope.rootToken = null;
+    $rootScope.factoryCookieData = null;
+    // kill the cookies
+    $cookies.remove('cookieData');
+    // redirect to home page
+    $state.go('home');
+  }
+
   service.allTweets = function() {
     var url = '/timeline';
     return $http({
@@ -58,8 +70,9 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   }
 
   service.userProfile = function(username) {
-    console.log('user anyone??', username);
     var url = '/profile/' + username;
+    console.log('user anyone??', url);
+
     return $http({
       method: 'GET',
       url: url
@@ -94,6 +107,19 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
       method: 'PUT',
       url: url,
       data: loginInfo
+    })
+  }
+
+  service.followUser = function(whoUserFollows) {
+    console.log('I am following this guy =>', whoUserFollows);
+    var url = '/api/follow';
+    return $http({
+      method: 'PUT',
+      url: url,
+      data: {
+        whoUserFollows: whoUserFollows,
+        user_id: $rootScope.rootUsername
+      }
     })
   }
 
@@ -166,7 +192,9 @@ app.controller('LoginController', function($scope, $state, $cookies, $rootScope,
 
 });
 
-app.controller('UserController', function($scope, TwitterFactory, $state, $rootScope) {
+app.controller('UserController', function($scope, TwitterFactory, $state, $rootScope, $stateParams) {
+
+  $scope.username = $stateParams.username;
 
   $scope.addTweet = function(newTweet) {
     TwitterFactory.addNewTweet($scope.username, newTweet)
@@ -179,7 +207,18 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
     });
   }
 
-  TwitterFactory.userProfile($rootScope.rootUsername)
+  $scope.follow = function(username) {
+    TwitterFactory.followUser(username)
+      .success(function(info) {
+        console.log('THINK AGAIN!:', info);
+        console.log('SUCCESS FOLLOWING!!');
+      })
+      .error(function() {
+        console.log('encountered error following....');
+      });
+  }
+
+  TwitterFactory.userProfile($scope.username)
     .success(function(allTweets) {
       console.log('profile tweets coming in!!::', allTweets);
       console.log('here is EVERYTHING COMING for you:::', allTweets.allTweets);
