@@ -1,0 +1,10 @@
+<h1>User Profile</h1>
+
+<form ng-submit="addTweet(newTweet)">
+  <textarea ng-model="newTweet" value="{{newTweet}}" name="newtweet" rows="8" cols="80" placeholder="What would you like to tweet about?"></textarea>
+  <input type="submit" name="" value="Tweet">
+</form>
+
+<ul ng-repeat="tweet in allTweets">
+  <li><strong>{{tweet.username}}</strong> tweeted: "{{tweet.tweet}}"</li>
+</ul>

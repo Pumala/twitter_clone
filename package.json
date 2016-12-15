@@ -1,0 +1,18 @@
+{
+  "name": "updated_twitter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "back_end.js",
+  "dependencies": {
+    "bluebird": "^3.4.6",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "mongoose": "^4.7.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Carolyn Lam",
+  "license": "ISC"
+}
