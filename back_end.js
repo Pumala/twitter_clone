@@ -42,7 +42,7 @@ const Tweet = mongoose.model('Tweet', {
 app.get('/timeline', function(request, response) {
   Tweet.find().limit(20)
     .then(function(allTweets) {
-      console.log('ALLLLLALLL ALLLLL::', allTweets);
+      // console.log('ALLLLLALLL ALLLLL::', allTweets);
       return response.json({
         allTweets: allTweets
       })
@@ -325,6 +325,24 @@ app.put('/api/follow', function(request, response) {
     });
 
 })
+
+app.delete('/api/remove/:tweetid', function(request, response) {
+
+  var tweetId = request.params.tweetid;
+
+  Tweet.remove({ _id: tweetId })
+    .then(function(status) {
+      console.log('SUCCESS DELETING TWEET');
+      response.json({
+        message: 'SUCCESS DELETING TWEET'
+      })
+    })
+    .catch(function(err) {
+      console.log('error deleting tweet', err.message);
+    })
+
+});
+
 
 app.listen(3000, function() {
   console.log('The server has started to listen........');

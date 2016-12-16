@@ -1,5 +1,13 @@
 <h1>World Timeline</h1>
 
 <ul ng-repeat="tweet in allTweets">
-  <li><strong><a ui-sref="profile({ username: tweet.username})">{{tweet.username}}</a></strong> tweeted: "{{tweet.tweet}}"</li>
+  <li>
+    <strong>
+      <a ui-sref="profile({ username: tweet.username})">{{tweet.username}}</a>
+    </strong>
+    tweeted: "{{tweet.tweet}}"
+    <div ng-show="rootUsername === tweet.username">
+      <button id="tweet._id" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
+    </div>
+  </li>
 </ul>

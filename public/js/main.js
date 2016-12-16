@@ -136,10 +136,34 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     })
   }
 
+  service.removeTweet = function(tweetId) {
+    console.log('remove PLEASEEEE', tweetId);
+    var url = '/api/remove/' + tweetId;
+    return $http({
+      method: 'DELETE',
+      url: url
+      // data: {
+      //   tweetId: tweetId
+      // }
+    })
+  }
+
   return service;
 });
 
-app.controller('WorldController', function($scope, TwitterFactory) {
+app.controller('WorldController', function($scope, $state, TwitterFactory) {
+
+  $scope.removeTweet = function(tweetId) {
+    console.log('tweeting this ID', tweetId);
+    TwitterFactory.removeTweet(tweetId)
+      .success(function(info) {
+        $state.reload();
+        console.log('removed the tweet!', info);
+      })
+      .error(function() {
+        console.log('error removing tweeet');
+      })
+  }
 
   TwitterFactory.allTweets()
     .success(function(allTweets) {
