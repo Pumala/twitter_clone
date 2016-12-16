@@ -281,6 +281,7 @@ app.put('/api/login', function(request, response) {
       return newToken.save();
     })
     .then(function(token) {
+      // console.log('saved token', token);
       // update user model to include token
       return [ User.update({
           _id: username
@@ -288,7 +289,7 @@ app.put('/api/login', function(request, response) {
           $set: {
             token: token._id
           }
-        }), token.expires, token._id];
+        }), User.findOne({ _id: username }), token.expires, token._id];
       // return [
       //   User.update({
       //     _id: username
@@ -307,17 +308,19 @@ app.put('/api/login', function(request, response) {
       //   token: randomToken
       // })
     })
-    .spread(function(updated, expires, token) {
+    .spread(function(updated, userInfo, expires, token) {
+      // console.log('i was updated i think', updated);
+      // console.log('i was updated i think', userInfo);
+      // console.log('i was updated i think', expires);
+      // console.log('i was updated i think', token);
       response.json({
         username: username,
+        userInfo: userInfo,
         token: {
           token: token,
           expires: expires
         }
       });
-      console.log('i was updated i think', updated);
-      console.log('i was updated i think', username);
-      console.log('i was updated i think', token);
       // response.send('ok');
     })
     // .spread(function(updated, username, randomToken) {
@@ -470,6 +473,61 @@ app.delete('/api/remove/:tweetid', function(request, response) {
     .catch(function(err) {
       console.log('error deleting tweet', err.message);
     })
+
+});
+
+app.put('/api/edit/likes', function(request, response) {
+
+  console.log('data from likes::', request.body);
+  var data = request.body;
+  var isLiked = data.isLiked;
+  var userId = data.username;
+  var tweetId = data.tweetId;
+
+  // first, use userId to find the userInfo
+  // we want to grab his likes array
+  User.findOne({ _id: userId})
+    .then(function(userInfo) {
+      var likesArr = userInfo.likes;
+
+      if (isLiked) {
+        console.log('HMMMM', likesArr);
+        likesArr.push(tweetId)
+      } else {
+        var removeIndex = likesArr.indexOf(tweetId);
+        likesArr.splice(removeIndex, 1);
+      }
+
+      console.log('LIKE OR NOT:', likesArr);
+
+      return [ User.update({
+        _id: userId
+      }, {
+        $set: {
+          likes: likesArr
+        }
+      }), likesArr ];
+    })
+    .spread(function(message, likesArr) {
+      console.log('sucess updating likes!!!', message);
+      response.json({
+        likes: likesArr
+      })
+    })
+    .catch(function(err) {
+      console.log('error liking...', err.message);
+    });
+
+  // User.update({
+  //   _id: userId
+  // }, {
+  //   $set: {
+  //     likes
+  //   }
+  // })
+  //   .then(function(userInf))
+
+  console.log('catching the LIKES', data);
 
 });
 

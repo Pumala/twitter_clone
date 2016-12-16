@@ -47,13 +47,21 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
 
     // check the token expiration date, only keep their session if not expired
     // else, log the user out of the session
-    var expDate = $cookies.getObject('cookieData').token.expires;
-    console.log('expires?', expDate);
-    console.log('TYPE?', typeof expDate);
+    // var expDate = $cookies.getObject('cookieData').token.expires;
+    // console.log('expires?', expDate);
+    // console.log('TYPE?', typeof expDate);
 
     // if so, then reassign the $rootScope variables
-    $rootScope.rootUsername = $cookies.getObject('cookieData').username;
+
+    // update the likes array
+    // var data = $cookies.getObject('cookieData');
+    $rootScope.rootUsername = $cookies.getObject('cookieData')._id;
     $rootScope.rootToken = $cookies.getObject('cookieData').token;
+    $rootScope.rootLikes = $cookies.getObject('cookieData').likes;
+    // data.likes = ...
+    // $cookies.putObject('cookieData', data);
+    console.log('WHO I LIKES::', $rootScope.rootLikes);
+    console.log('who is the root User??', $rootScope.rootUsername);
   }
 
   // LOGOUT
@@ -70,6 +78,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
       // reset all the $rootScope variables to null
       $rootScope.rootUsername = null;
       $rootScope.rootToken = null;
+      $rootScope.rootLikes = null;
       $rootScope.factoryCookieData = null;
       // kill the cookies
       $cookies.remove('cookieData');
@@ -152,7 +161,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
         wasFollowing: wasFollowing,
         user_id: $rootScope.rootUsername
       }
-    })
+    });
   }
 
   service.removeTweet = function(tweetId) {
@@ -164,13 +173,60 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
       // data: {
       //   tweetId: tweetId
       // }
-    })
+    });
+  }
+
+  service.updateLikes = function(isLiked, tweetId) {
+    var url = '/api/edit/likes';
+    return $http({
+      method: 'PUT',
+      url: url,
+      data: {
+        isLiked: isLiked,
+        tweetId: tweetId,
+        username: $rootScope.rootUsername
+      }
+    });
+  }
+
+  service.updateRootLikes = function(likes) {
+
+
+    console.log('I KNOW WHO I AM for real!!!!', likes.likes);
+
+    console.log('BEFORE COOKIE::', $cookies.getObject('cookieData'));
+
+    var data = $cookies.getObject('cookieData');
+
+    data.likes = likes.likes;
+
+    $cookies.remove('cookieData');
+
+    $cookies.putObject('cookieData', data);
+
+    var newCookies = $cookies.getObject('cookieData');
+
+
+    console.log('DATA COOKIES::', data);
+    console.log('NEW COOKIES::', newCookies);
+
+    // var data = $cookies.getObject('cookieData');
+    //
+    // // data.likes = likes;
+    //
+    // console.log('COOKIES LIKES this data ::', data);
+    //
+    // $cookies.putObject('cookieData', data);
+    //
+    $rootScope.rootLikes = $cookies.getObject('cookieData').likes;
+    //
+    // console.log('UPDATED COOKIE::', $cookies.getObject('cookieData'));
   }
 
   return service;
 });
 
-app.controller('WorldController', function($scope, $state, TwitterFactory) {
+app.controller('WorldController', function($scope, $rootScope, $state, TwitterFactory) {
 
   $scope.removeTweet = function(tweetId) {
     console.log('tweeting this ID', tweetId);
@@ -184,10 +240,30 @@ app.controller('WorldController', function($scope, $state, TwitterFactory) {
       })
   }
 
+  $scope.likeTweet = function(isLiked, tweetId) {
+    TwitterFactory.updateLikes(isLiked, tweetId)
+      .success(function(likes) {
+        console.log('sucess liking!!', likes);
+        TwitterFactory.updateRootLikes(likes);
+        $state.reload();
+        console.log('root likes:', $rootScope.rootLikes);
+        console.log('root username:', $rootScope.rootUsername);
+      })
+      .error(function(err) {
+        console.log('error liking!!');
+      });
+  }
+
   TwitterFactory.allTweets()
     .success(function(allTweets) {
       console.log('here is all the tweets for you:::', allTweets);
       $scope.allTweets = allTweets.allTweets;
+      console.log('TWEETETETE', $rootScope.rootLikes);
+
+
+
+      // var index = $rootScope.rootLikes.indexOf('58541e6a228c3a0eaea6fad1');
+      // console.log('INDEX::', index);
 
     })
     .error(function(err) {
@@ -234,12 +310,16 @@ app.controller('LoginController', function($scope, $state, $cookies, $rootScope,
 
     TwitterFactory.submitLoginInfo(loginInfo)
       .success(function(userInfo) {
-
-        $cookies.putObject('cookieData', userInfo)
+        console.log('LOGEED IN OBJECT!!!!!! IMPOTENT!!!:', userInfo);
+        $cookies.putObject('cookieData', userInfo.userInfo)
         // store user login infor in $rootScope variables
+
+
         $rootScope.rootUsername = userInfo.username;
+        $rootScope.rootLikes = userInfo.userInfo.likes;
         $rootScope.rootToken = userInfo.token;
         $state.go('home');
+
         // console.log('Random token and username:', userInfo);
 
       })
@@ -312,6 +392,7 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
       $scope.username = allTweets.userInfo._id;
       $scope.numFollowing = allTweets.userInfo.following.length;
       $scope.numFollowers = allTweets.userInfo.followers.length;
+      $scope.numLikes = allTweets.userInfo.likes.length;
 
       $scope.numTweets = allTweets.numUserTweets;
 
