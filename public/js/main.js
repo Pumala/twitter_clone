@@ -44,6 +44,13 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
 
   // check if user is logged in
   if ($rootScope.factoryCookieData) {
+
+    // check the token expiration date, only keep their session if not expired
+    // else, log the user out of the session
+    var expDate = $cookies.getObject('cookieData').token.expires;
+    console.log('expires?', expDate);
+    console.log('TYPE?', typeof expDate);
+
     // if so, then reassign the $rootScope variables
     $rootScope.rootUsername = $cookies.getObject('cookieData').username;
     $rootScope.rootToken = $cookies.getObject('cookieData').token;
@@ -51,14 +58,25 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
 
   // LOGOUT
   $rootScope.rootLogout = function() {
-    // reset all the $rootScope variables to null
-    $rootScope.rootUsername = null;
-    $rootScope.rootToken = null;
-    $rootScope.factoryCookieData = null;
-    // kill the cookies
-    $cookies.remove('cookieData');
-    // redirect to home page
-    $state.go('home');
+    console.log('this is the token you want', $rootScope.rootToken.token);
+    // delete token
+    var url = "/api/logout/" + $rootScope.rootToken.token;
+    return $http({
+      method: 'DELETE',
+      url: url
+    })
+    .success(function(message) {
+      console.log('the message!!', message);
+      // reset all the $rootScope variables to null
+      $rootScope.rootUsername = null;
+      $rootScope.rootToken = null;
+      $rootScope.factoryCookieData = null;
+      // kill the cookies
+      $cookies.remove('cookieData');
+      // redirect to home page
+      $state.go('home');
+    });
+
   }
 
   service.allTweets = function() {

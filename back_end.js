@@ -53,13 +53,19 @@ const User = mongoose.model('User', {
   following: [String],
   followers: [String],
   likes: [ObjectId],
-  avatar: [String]
+  avatar: [String],
+  token: String
 });
 
 const Tweet = mongoose.model('Tweet', {
   tweet: { type: String, required: true},
   date: String,
   username: String
+});
+
+const AuthToken = mongoose.model('AuthToken', {
+  _id: { type: String, required: true, unique: true},
+  expires: { type: Date, required: true }
 });
 
 // ********************************
@@ -196,7 +202,8 @@ app.post('/api/signup', function(request, response) {
         following: [],
         followers: [],
         likes: [],
-        avatar: null
+        avatar: "",
+        token: ""
       })
       newUser.save();
     })
@@ -210,36 +217,124 @@ app.post('/api/signup', function(request, response) {
 
 });
 
+app.delete('/api/logout/:tokenid', function(request, response) {
+
+  var tokenId = request.params.tokenid;
+  console.log('you requested token::', tokenId);
+
+  // refactor this soon!!!!
+  AuthToken.remove({ _id: tokenId })
+    .then(function(updatedToken) {
+      // console.log('updated the token?', updatedToken);
+      return User.update({
+        token: tokenId
+      }, {
+        $set: {
+          token: ""
+        }
+      })
+    })
+    .then(function(updatedUser) {
+      console.log('updated the user?', updatedUser);
+      response.json({
+        message: 'SUCCESS deleting token'
+      });
+    })
+    .catch(function(err) {
+      console.log('error deleting auth token');
+    });
+
+});
+
 app.put('/api/login', function(request, response) {
 
   var username = request.body.username;
   var password = request.body.password;
   console.log('REQUESTED::', request.body);
+
   User.find({ _id: username })
     .then(function(userInfo) {
       var hash = userInfo[0].password;
-      bcrypt.compare(password, hash)
-        .then(function(results) {
-          var message = "";
-          // check if results is true
-          if (results) {
-            message = 'SUCESSS';
-          } else {
-            message = 'FAIL';
-          }
-          // generates a random token
-          var randomToken = uuidV4();
-          console.log('TOKEN::', randomToken);
-          response.json({
-            // pass in request.body which is an Object
-            // storing username and password
-            username: username,
-            token: randomToken
-          })
-        })
+      return bcrypt.compare(password, hash);
     })
+    .then(function(results) {
+      var message = "";
+      // check if results is true
+      if (results) {
+        message = 'SUCESSS';
+      } else {
+        message = 'FAIL';
+      }
+      // generates a random token
+      var randomToken = uuidV4();
+      console.log('TOKEN::', randomToken);
+
+      var addThirty = moment().add(30, 'days').format('MM-DD-YYYY')
+      console.log('ADD 30 days', addThirty);
+
+      // insert new entry in AuthToken model
+      var newToken = new AuthToken({
+        _id: randomToken,
+        expires: moment().add(30, 'days').format('MM-DD-YYYY')
+      })
+
+      return newToken.save();
+    })
+    .then(function(token) {
+      // update user model to include token
+      return [ User.update({
+          _id: username
+        }, {
+          $set: {
+            token: token._id
+          }
+        }), token.expires, token._id];
+      // return [
+      //   User.update({
+      //     _id: username
+      //   }, {
+      //     $set: {
+      //       token: randomToken
+      //     }
+      //   }),
+      //   username,
+      //   randomToken
+      // ]
+      // response.json({
+      //   // pass in request.body which is an Object
+      //   // storing username and password
+      //   username: username,
+      //   token: randomToken
+      // })
+    })
+    .spread(function(updated, expires, token) {
+      response.json({
+        username: username,
+        token: {
+          token: token,
+          expires: expires
+        }
+      });
+      console.log('i was updated i think', updated);
+      console.log('i was updated i think', username);
+      console.log('i was updated i think', token);
+      // response.send('ok');
+    })
+    // .spread(function(updated, username, randomToken) {
+    //   console.log('updated: ', updated);
+    //   console.log('username: ', username);
+    //   console.log('randomToken: ', randomToken);
+    //
+    //   response.json({
+    //     // pass in request.body which is an Object
+    //     // storing username and password
+    //     username: username,
+    //     token: randomToken
+    //   })
+    // })
     .catch(function(err) {
       console.log('Error checking login info:', err.message);
+      response.send({ error: err.message });
     })
 
 });
