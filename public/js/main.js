@@ -92,6 +92,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   }
 
   service.submitNewSignUp = function(signupInfo) {
+    console.log('nEW SIGNUP:', signupInfo)
     var url = '/api/signup';
     return $http({
       method: 'POST',
@@ -183,7 +184,10 @@ app.controller('SignUpController', function($scope, TwitterFactory, $state) {
     if ($scope.password === $scope.confirm_password && $scope.password.length > 3) {
       var newUserInfo = {
         username: $scope.username,
-        password: $scope.password
+        password: $scope.password,
+        firstName: $scope.firstName,
+        lastName: $scope.lastName,
+        email: $scope.email
       }
       TwitterFactory.submitNewSignUp(newUserInfo)
         .success(function(info) {

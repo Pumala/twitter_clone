@@ -3,6 +3,7 @@ const bluebird      = require('bluebird');
 const express       = require('express');
 const bodyParser    = require('body-parser');
 const uuidV4        = require('uuid/v4');
+const moment        = require('moment');
 // BCRYPT
 const bcrypt        = require('bcrypt-promise');
 const saltRounds = 10;
@@ -16,25 +17,50 @@ const ObjectId      = mongoose.Schema.ObjectId;
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-mongoose.connect('mongodb://localhost/new_twitter_db');
+// OLD DB
+// mongoose.connect('mongodb://localhost/new_twitter_db');
 
-const User = mongoose.model('User', {
-  _id: { type: String, required: true, unique: true},
-  password: { type: String, required: true},
-  following: [String],
-  followers: [String]
-});
+// NEW DB
+mongoose.connect('mongodb://localhost/master_twitter_db');
 
-const Tweet = mongoose.model('Tweet', {
-  tweet: { type: String, required: true},
-  date: Date,
-  username: String
-});
+// OLD MODELS
+// const User = mongoose.model('User', {
+//   _id: { type: String, required: true, unique: true},
+//   password: { type: String, required: true},
+//   following: [String],
+//   followers: [String]
+// });
+//
+// const Tweet = mongoose.model('Tweet', {
+//   tweet: { type: String, required: true},
+//   date: Date,
+//   username: String
+// });
 
 // come back to redirect
 // app.get('/', function(request, response) {
 //   response.redirect('http://google.com');
 // })
+
+// UPDATED MODELS
+const User = mongoose.model('User', {
+  _id: { type: String, required: true, unique: true},
+  firstName: { type: String, required: true, unique: true},
+  lastName: { type: String, required: true, unique: true},
+  password: { type: String, required: true},
+  email: { type: String, required: true},
+  joined: String,
+  following: [String],
+  followers: [String],
+  likes: [ObjectId],
+  avatar: [String]
+});
+
+const Tweet = mongoose.model('Tweet', {
+  tweet: { type: String, required: true},
+  date: String,
+  username: String
+});
 
 // ********************************
 //          WORLD TIMELINE
@@ -135,7 +161,7 @@ app.post('/newtweet', function(request, response) {
 
   var addNewTweet = new Tweet({
     tweet: newTweet,
-    date: Date.now(),
+    date: moment().format('MMMM Do YYYY'),
     username: userTweet
   })
 
@@ -148,9 +174,12 @@ app.post('/newtweet', function(request, response) {
 });
 
 app.post('/api/signup', function(request, response) {
-
+  console.log('NEW SINGUP PPL:', request.body);
   var username = request.body.username;
   var password = request.body.password;
+  var firstName = request.body.firstName;
+  var lastName = request.body.lastName;
+  var email = request.body.email;
 
   bcrypt.genSalt(saltRounds)
     .then(function(salt) {
@@ -159,9 +188,15 @@ app.post('/api/signup', function(request, response) {
     .then(function(hash) {
       var newUser = new User({
         _id: username,
+        firstName: firstName,
+        lastName: lastName,
         password: hash,
+        email: email,
+        joined: moment().format('MMMM Do YYYY'),
         following: [],
-        followers: []
+        followers: [],
+        likes: [],
+        avatar: null
       })
       newUser.save();
     })
