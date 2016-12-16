@@ -18,5 +18,9 @@
 </div>
 
 <ul ng-repeat="tweet in allTweets">
-  <li><strong>{{tweet.username}}</strong> tweeted: "{{tweet.tweet}}"</li>
+  <li>
+    <strong>{{tweet.username}}</strong>
+    tweeted: "{{tweet.tweet}}"
+    <button id="tweet._id" ng-show="tweet.username === rootUsername" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
+  </li>
 </ul>

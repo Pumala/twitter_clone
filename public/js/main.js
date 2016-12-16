@@ -244,6 +244,18 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
       });
   }
 
+  $scope.removeTweet = function(tweetId) {
+    console.log('tweeting this ID', tweetId);
+    TwitterFactory.removeTweet(tweetId)
+      .success(function(info) {
+        $state.reload();
+        console.log('removed the tweet!', info);
+      })
+      .error(function() {
+        console.log('error removing tweeet');
+      })
+  }
+
   $scope.unfollow = function(username) {
     console.log('I TRIED');
     TwitterFactory.unfollowUser(username)
