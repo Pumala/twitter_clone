@@ -123,6 +123,19 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     })
   }
 
+  service.unfollowUser = function(wasFollowing) {
+    console.log('was Following this guy =>', wasFollowing);
+    var url = '/api/unfollow';
+    return $http({
+      method: 'PUT',
+      url: url,
+      data: {
+        wasFollowing: wasFollowing,
+        user_id: $rootScope.rootUsername
+      }
+    })
+  }
+
   return service;
 });
 
@@ -198,18 +211,33 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
 
   $scope.addTweet = function(newTweet) {
     TwitterFactory.addNewTweet($scope.username, newTweet)
-    .success(function(tweet) {
-      console.log('inserted the new tweet!!::', tweet);
-      $state.reload();
-    })
-    .error(function(err) {
-      console.log('oh no!!! error!!!', err.message);
-    });
+      .success(function(tweet) {
+        console.log('inserted the new tweet!!::', tweet);
+        $state.reload();
+      })
+      .error(function(err) {
+        console.log('oh no!!! error!!!', err.message);
+      });
+  }
+
+  $scope.unfollow = function(username) {
+    console.log('I TRIED');
+    TwitterFactory.unfollowUser(username)
+      .success(function() {
+        $scope.isFollowing = false;
+        $state.reload();
+        console.log('success unfollowing');
+      })
+      .error(function(err) {
+        console.log('failed at unfollowing');
+      })
   }
 
   $scope.follow = function(username) {
     TwitterFactory.followUser(username)
       .success(function(info) {
+        $scope.isFollowing = true;
+        $state.reload();
         console.log('THINK AGAIN!:', info);
         console.log('SUCCESS FOLLOWING!!');
       })
@@ -230,6 +258,21 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
       $scope.numTweets = allTweets.numUserTweets;
 
       $scope.allTweets = allTweets.allTweets;
+
+      if ($rootScope.rootUsername) {
+        var followers = allTweets.userInfo.followers;
+        // check if user if currently following this person
+        if (followers.indexOf($rootScope.rootUsername) > -1) {
+          $scope.isFollowing = true;
+        } else {
+          $scope.isFollowing = false;
+        }
+        // followers.forEach(function(follower) {
+        //   if
+        // });
+      } else {
+        console.log('NOPE');
+      }
     })
     .error(function(err) {
       console.log('oh no!!! error!!!', err.message);

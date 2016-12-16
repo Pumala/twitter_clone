@@ -209,6 +209,75 @@ app.put('/api/login', function(request, response) {
 
 });
 
+app.put('/api/unfollow', function(request, response) {
+
+  var wasFollowing = request.body.wasFollowing;
+  var user_id = request.body.user_id;
+
+  bluebird.all([
+    User.findOne({
+    _id: user_id
+  }),
+  User.findOne({
+    _id: wasFollowing
+  })])
+    .spread(function(userInfo, wasFollowingInfo) {
+      console.log('user info::', userInfo.following);
+      console.log('wasFollowing info::', wasFollowingInfo);
+
+      // assign the array of who the user is following to a variable
+      var following = userInfo.following;
+      // assign the array of who were the followers of who the user was following to a variable
+      var followers = wasFollowingInfo.followers;
+
+      // remove user from the following array because he is no longer following the person
+      var followingIndex = following.indexOf(wasFollowing);
+      // console.log('index was::', removeIndex);
+
+      // remove who he was following from the following array
+      following.splice(followingIndex, 1);
+
+      var followerIndex = followers.indexOf(user_id);
+
+      // console.log('the followerindex', followerIndex);
+
+      followers.splice(followerIndex, 1);
+
+      // console.log('the followers::', followers);
+      //
+      // console.log('killed it the following', following);
+      return [ User.update({
+          _id: user_id
+        }, {
+          $set: {
+            following
+          }
+        }),
+        User.update({
+          _id: wasFollowing
+        }, {
+          $set: {
+            followers
+          }
+        })
+      ]
+
+    })
+    .spread(function(updated) {
+      console.log('updated?', updated);
+      response.json({
+        message: 'it was a success unfollowing!'
+      })
+    })
+    .catch(function(err) {
+      console.log('err trying to unfollow::', err);
+    })
+  // console.log('I was following him::', wasFollowing);
+
+
+
+});
+
 app.put('/api/follow', function(request, response) {
 
   var user_id = request.body.user_id;

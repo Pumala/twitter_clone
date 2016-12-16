@@ -1,6 +1,9 @@
 <h1>User Profile</h1>
 
-<button ng-show="username !== rootUsername && rootToken" ng-click="follow(username)" class="btn btn-success">Follow</button>
+<div ng-show="username !== rootUsername && rootToken">
+  <button ng-show="!isFollowing" ng-click="follow(username)" class="btn btn-success">follow</button>
+  <button ng-show="isFollowing" ng-click="unfollow(username)" class="btn btn-success">unfollow</button>
+</div>
 
 <form ng-show="username === rootUsername" ng-submit="addTweet(newTweet)">
   <textarea ng-model="newTweet" value="{{newTweet}}" name="newtweet" rows="8" cols="80" placeholder="What would you like to tweet about?"></textarea>
