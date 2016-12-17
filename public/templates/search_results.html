@@ -1,1 +1,7 @@
 <h1>SEARCH RESULTS PAGE</h1>
+
+<h2>Searching for .... {{search}}</h2>
+
+<ul ng-repeat="user in allUsers">
+  <li><a ui-sref="profile({ username: user})">{{user}}</a></li>
+</ul>

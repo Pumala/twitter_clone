@@ -531,6 +531,29 @@ app.put('/api/edit/likes', function(request, response) {
 
 });
 
+app.get('/api/search/:keyword', function(request, response) {
+  // var search = request.params.keyword;
+
+  // hardcode the search value as win until gaining understanding of regex
+
+  User.find({ _id: /.*win.*/ })
+    .then(function(results) {
+      console.log('found results for :::', results);
+      var allUsers = [];
+      results.forEach(function(result) {
+        allUsers.push(result._id);
+      });
+      console.log('all users found::', allUsers);
+      return response.json({
+        allUsers: allUsers
+      })
+    })
+    .catch(function(err) {
+      console.log('encountered errors searching', err.message);
+    });
+
+});
+
 
 app.listen(3000, function() {
   console.log('The server has started to listen........');

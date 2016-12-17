@@ -28,6 +28,12 @@ app.config(function($stateProvider, $urlRouterProvider) {
     url: "/login",
     templateUrl: "templates/login.html",
     controller: "LoginController"
+  })
+  .state({
+    name: "search",
+    url: "/search/{search_keyword}",
+    templateUrl: "templates/search_results.html",
+    controller: "SearchResultsController"
   });
 
   $urlRouterProvider.otherwise('/');
@@ -223,8 +229,45 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     // console.log('UPDATED COOKIE::', $cookies.getObject('cookieData'));
   }
 
+  service.search = function(search_keyword) {
+    var url = '/api/search/' + search_keyword;
+    return $http({
+      method: 'GET',
+      url: url
+    });
+  }
+
   return service;
 });
+
+// Search Controller
+app.controller('SearchController', function($scope, $rootScope, $stateParams, $state, TwitterFactory) {
+
+  $scope.searchResults = function(searchQuery) {
+    console.log(' the search query::', $scope.searchQuery)
+    $state.go('search', { 'search_keyword': searchQuery });
+  }
+
+})
+
+// Search Results controller
+app.controller('SearchResultsController', function($scope, $stateParams, $rootScope, TwitterFactory) {
+  // console.log('state prarams::', $stateParams);
+
+  $scope.search = $stateParams.search_keyword;
+
+  console.log('state prarams::', $scope.search);
+
+  TwitterFactory.search($scope.search)
+    .success(function(info) {
+      // $state.reload();
+      $scope.allUsers = info.allUsers;
+      console.log('search results!', info.allUsers);
+    })
+    .error(function() {
+      console.log('error searching!!');
+    })
+})
 
 app.controller('WorldController', function($scope, $rootScope, $state, TwitterFactory) {
 
@@ -246,8 +289,8 @@ app.controller('WorldController', function($scope, $rootScope, $state, TwitterFa
         console.log('sucess liking!!', likes);
         TwitterFactory.updateRootLikes(likes);
         $state.reload();
-        console.log('root likes:', $rootScope.rootLikes);
-        console.log('root username:', $rootScope.rootUsername);
+        // console.log('root likes:', $rootScope.rootLikes);
+        // console.log('root username:', $rootScope.rootUsername);
       })
       .error(function(err) {
         console.log('error liking!!');
@@ -356,6 +399,20 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
       .error(function() {
         console.log('error removing tweeet');
       })
+  }
+
+  $scope.likeTweet = function(isLiked, tweetId) {
+    TwitterFactory.updateLikes(isLiked, tweetId)
+      .success(function(likes) {
+        console.log('success liking!!', likes);
+        TwitterFactory.updateRootLikes(likes);
+        $state.reload();
+        console.log('root likes:', $rootScope.rootLikes);
+        console.log('root username:', $rootScope.rootUsername);
+      })
+      .error(function(err) {
+        console.log('error liking!!');
+      });
   }
 
   $scope.unfollow = function(username) {

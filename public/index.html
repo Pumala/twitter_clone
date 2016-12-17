@@ -37,9 +37,10 @@
                 <!-- /.navbar-collapse -->
             </nav>
 
-            <form class="" action="index.html" method="post">
-              <input type="text" name="search">
-              <button type="submit">Search</button>
+            <form ng-controller="SearchController" ng-submit="searchResults(searchQuery)">
+              <input type="text" ng-model="searchQuery" name="search">
+              <button type="submit" class="btn btn-primary">Search</button>
+              <!-- <a ui-sref="search({ search_keyword: searchQuery})" class="btn btn-primary">Search</a> -->
             </form>
 
         </div>
