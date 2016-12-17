@@ -531,6 +531,17 @@ app.put('/api/edit/likes', function(request, response) {
 
 });
 
+app.get('/api/retweet/:retweetid', function(request, response) {
+
+  var retweetId = request.params.retweetid;
+
+  console.log('retweet ID!', retweetId);
+
+  return response.json({
+    message: 'success retweeting!!'
+  })
+});
+
 app.get('/api/search/:keyword', function(request, response) {
   // var search = request.params.keyword;
 

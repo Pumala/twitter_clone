@@ -237,6 +237,14 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     });
   }
 
+  service.retweeting = function(retweetId) {
+    var url = '/api/retweet/' + retweetId;
+    return $http({
+      method: 'GET',
+      url: url
+    })
+  }
+
   return service;
 });
 
@@ -270,6 +278,16 @@ app.controller('SearchResultsController', function($scope, $stateParams, $rootSc
 })
 
 app.controller('WorldController', function($scope, $rootScope, $state, TwitterFactory) {
+
+  $scope.retweet = function(tweeId) {
+    TwitterFactory.retweeting(tweeId)
+      .sucess(function(results) {
+        console.log('retweeting results::', results);
+      })
+      .error(function() {
+        console.log('error retweeting.....');
+      });
+  }
 
   $scope.removeTweet = function(tweetId) {
     console.log('tweeting this ID', tweetId);
