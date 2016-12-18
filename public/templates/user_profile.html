@@ -20,15 +20,35 @@
 
 <ul ng-repeat="tweet in allTweets">
   <li>
+    <span class="retweeter" ng-if="tweet.retweeter">{{tweet.retweeter}} retweeted:</span><br>
+    <a ui-sref="profile({username: tweet.username})">
+      <strong>{{tweet.username}}</strong>
+    </a>
+    tweeted: "{{tweet.tweet}}"
+    <div>
+      <i ng-show="(tweet.username !== rootUsername)" ng-click="retweet(tweet._id)" class="fa fa-retweet" aria-hidden="true"></i>
+      <i ng-show="((tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)) || ((rootUsername === undefined) && (tweet.likes.length === 0))" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
+      <i ng-show="((tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)) || ((rootUsername === undefined) && (tweet.likes.length > 0))" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
+      <span>{{tweet.likes.length}}</span>
+      <button ng-show="tweet.username === rootUsername" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
+    </div>
+  </li>
+</ul>
+
+
+<!-- <ul ng-repeat="tweet in allTweets">
+  <li>
+    <span ng-if="tweet.retweeter">{{tweet.retweeter}} retweeted:</span><br>
     <a ui-sref="profile({username: tweet.username})">
       <strong>{{tweet.username}}</strong>
     </a>
     tweeted: "{{tweet.tweet}}"
     <div ng-show="rootUsername">
+      <i ng-show="(tweet.username !== rootUsername)" ng-click="retweet(tweet._id)" class="fa fa-retweet" aria-hidden="true"></i>
       <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
       <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
       <span>{{tweet.likes.length}}</span>
       <button ng-show="tweet.username === rootUsername" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
     </div>
   </li>
-</ul>
+</ul> -->

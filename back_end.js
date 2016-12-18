@@ -147,14 +147,37 @@ app.get('/profile/:username', function(request, response) {
 
   User.findOne({ _id: user_id})
     .then(function(userInfo) {
+
+      var followingArr = userInfo.following.concat([user_id]);
+
       // console.log('USER INFO:::', userInfo);
       return [userInfo, Tweet.find({
         username: {
-          $in: userInfo.following.concat([user_id])
+          $in: followingArr
+        }
+      }), User.find({
+        _id: {
+          $in: followingArr
         }
       })]
     })
-    .spread(function(userInfo, allTweets) {
+    .spread(function(userInfo, allTweets, allUserInfos) {
+      console.log('ALL USER INFO::', allUserInfos);
+
+      var allRetweets = [];
+      var allRetweetsIds = [];
+
+      allUserInfos.forEach(function(userInfo) {
+        userInfo.retweets.forEach(function(tweetId) {
+          allRetweets.push({ retweeter: userInfo._id, tweetId: tweetId });
+          allRetweetsIds.push(tweetId);
+        })
+      });
+
+      console.log('ALL RETWEETS IDS HAHAHA', allRetweetsIds);
+
+      console.log('ALL RETWEETS ARRR!!!', allRetweets);
+
       var userId = userInfo._id;
       var numUserTweets = 0;
       allTweets.forEach(function(tweet) {
@@ -163,7 +186,39 @@ app.get('/profile/:username', function(request, response) {
           numUserTweets++;
         }
       });
-      console.log('Num User TWEETS::', numUserTweets);
+      console.log('ALLL TWEETS::', allTweets);
+
+      return [ userInfo, allTweets, numUserTweets, allRetweets, Tweet.find({
+        _id: {
+          $in: allRetweetsIds
+        }
+      }) ]
+
+
+    })
+    .spread(function(userInfo, allTweets, numUserTweets, allRetweetsArr, allRetweetsInfo) {
+
+      var retweetArr = [];
+
+      allRetweetsArr.forEach(function(retweet) {
+        allRetweetsInfo.forEach(function(retweetInfo) {
+          if (String(retweet.tweetId) === String(retweetInfo._id)) {
+            retweetArr.push({
+              _id: retweetInfo._id,
+              retweeter: retweet.retweeter,
+              tweet: retweetInfo.tweet,
+              date: retweetInfo.date,
+              username: retweetInfo.username,
+              likes: retweetInfo.likes
+            })
+          }
+        });
+      });
+
+      allTweets = allTweets.concat(retweetArr);
+
+      // console.log('NEWEST ARR!!:', allTweets);
+      // console.log('All 00000 RETWEETS::', allRetweetsInfo);
 
       return response.json({
         userInfo: userInfo,

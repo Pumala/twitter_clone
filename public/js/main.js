@@ -279,16 +279,21 @@ app.controller('SearchResultsController', function($scope, $stateParams, $rootSc
 })
 
 app.controller('WorldController', function($scope, $rootScope, $state, TwitterFactory) {
+  console.log('rootyyy:', $rootScope.rootUsername);
 
   $scope.retweet = function(tweetId) {
-    TwitterFactory.retweeting(tweetId)
-      .success(function(results) {
-        console.log('retweeting results::', results);
-        $state.reload();
-      })
-      .error(function() {
-        console.log('error retweeting.....');
-      });
+    if ($rootScope.rootUsername) {
+      TwitterFactory.retweeting(tweetId)
+        .success(function(results) {
+          console.log('retweeting results::', results);
+          $state.reload();
+        })
+        .error(function() {
+          console.log('error retweeting.....');
+        });
+    } else {
+      $state.go('login');
+    }
   }
 
   $scope.removeTweet = function(tweetId) {
@@ -304,17 +309,21 @@ app.controller('WorldController', function($scope, $rootScope, $state, TwitterFa
   }
 
   $scope.likeTweet = function(isLiked, tweetId) {
-    TwitterFactory.updateLikes(isLiked, tweetId)
-      .success(function(likes) {
-        console.log('sucess liking!!', likes);
-        TwitterFactory.updateRootLikes(likes);
-        $state.reload();
-        // console.log('root likes:', $rootScope.rootLikes);
-        // console.log('root username:', $rootScope.rootUsername);
-      })
-      .error(function(err) {
-        console.log('error liking!!');
-      });
+    if ($rootScope.rootUsername) {
+      TwitterFactory.updateLikes(isLiked, tweetId)
+        .success(function(likes) {
+          console.log('sucess liking!!', likes);
+          TwitterFactory.updateRootLikes(likes);
+          $state.reload();
+          // console.log('root likes:', $rootScope.rootLikes);
+          // console.log('root username:', $rootScope.rootUsername);
+        })
+        .error(function(err) {
+          console.log('error liking!!');
+        });
+    } else {
+      $state.go('login');
+    }
   }
 
   TwitterFactory.allTweets()
@@ -392,6 +401,21 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
 
   $scope.username = $stateParams.username;
 
+  $scope.retweet = function(tweetId) {
+    if ($rootScope.rootUsername) {
+      TwitterFactory.retweeting(tweetId)
+        .success(function(results) {
+          console.log('retweeting results::', results);
+          $state.reload();
+        })
+        .error(function() {
+          console.log('error retweeting.....');
+        });
+    } else {
+      $state.go('login');
+    }
+  }
+
   $scope.addTweet = function(newTweet) {
     TwitterFactory.addNewTweet($scope.username, newTweet)
       .success(function(tweet) {
@@ -416,17 +440,21 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
   }
 
   $scope.likeTweet = function(isLiked, tweetId) {
-    TwitterFactory.updateLikes(isLiked, tweetId)
-      .success(function(likes) {
-        console.log('success liking!!', likes);
-        TwitterFactory.updateRootLikes(likes);
-        $state.reload();
-        console.log('root likes:', $rootScope.rootLikes);
-        console.log('root username:', $rootScope.rootUsername);
-      })
-      .error(function(err) {
-        console.log('error liking!!');
-      });
+    if ($rootScope.rootUsername) {
+      TwitterFactory.updateLikes(isLiked, tweetId)
+        .success(function(likes) {
+          console.log('success liking!!', likes);
+          TwitterFactory.updateRootLikes(likes);
+          $state.reload();
+          console.log('root likes:', $rootScope.rootLikes);
+          console.log('root username:', $rootScope.rootUsername);
+        })
+        .error(function(err) {
+          console.log('error liking!!');
+        });
+    } else {
+      $state.go('login');
+    }
   }
 
   $scope.unfollow = function(username) {
@@ -443,16 +471,20 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
   }
 
   $scope.follow = function(username) {
-    TwitterFactory.followUser(username)
-      .success(function(info) {
-        $scope.isFollowing = true;
-        $state.reload();
-        console.log('THINK AGAIN!:', info);
-        console.log('SUCCESS FOLLOWING!!');
-      })
-      .error(function() {
-        console.log('encountered error following....');
-      });
+    if ($rootScope.rootUsername) {
+      TwitterFactory.followUser(username)
+        .success(function(info) {
+          $scope.isFollowing = true;
+          $state.reload();
+          console.log('THINK AGAIN!:', info);
+          console.log('SUCCESS FOLLOWING!!');
+        })
+        .error(function() {
+          console.log('encountered error following....');
+        });
+    } else {
+      $state.go('login');
+    }
   }
 
   TwitterFactory.userProfile($scope.username)
