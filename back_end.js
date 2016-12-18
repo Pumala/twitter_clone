@@ -53,6 +53,7 @@ const User = mongoose.model('User', {
   following: [String],
   followers: [String],
   likes: [ObjectId],
+  retweets: [ObjectId],
   avatar: [String],
   token: String
 });
@@ -60,7 +61,8 @@ const User = mongoose.model('User', {
 const Tweet = mongoose.model('Tweet', {
   tweet: { type: String, required: true},
   date: String,
-  username: String
+  username: String,
+  likes: [String]
 });
 
 const AuthToken = mongoose.model('AuthToken', {
@@ -72,16 +74,65 @@ const AuthToken = mongoose.model('AuthToken', {
 //          WORLD TIMELINE
 // *******************************
 app.get('/timeline', function(request, response) {
-  Tweet.find().limit(20)
-    .then(function(allTweets) {
-      // console.log('ALLLLLALLL ALLLLL::', allTweets);
-      return response.json({
-        allTweets: allTweets
+
+  bluebird.all([ Tweet.find().limit(20), User.find().limit(20)])
+    .spread(function(allTweets, allUsers) {
+
+      var allRetweetsArr = [];
+      var allRetweetsIds = [];
+
+      allUsers.forEach(function(user) {
+        console.log('each for each::', user.retweets);
+        if (user.retweets.length > 0) {
+          allRetweetsArr.push({ user: user._id, retweetId: user.retweets});
+          allRetweetsIds = allRetweetsIds.concat(user.retweets);
+        }
       })
+
+      return [ allTweets, allRetweetsArr, Tweet.find({
+        _id: {
+          $in: allRetweetsIds
+        }
+      })]
+
     })
-    .catch(function(err) {
-      console.log('ran into error in world timeline::', err);
-    });
+    .spread(function(allTweets, allRetweetsArr, allRetweets) {
+
+      var updatedArr = [];
+
+      allRetweetsArr.forEach(function(retweetObj) {
+        retweetObj.retweetId.forEach(function(retweetId) {
+          updatedArr.push({ retweeter: retweetObj.user, retweetId: retweetId});
+        })
+      })
+
+      var newEverthing = [];
+
+      updatedArr.forEach(function(tweet) {
+        allRetweets.forEach(function(retweet) {
+
+          if (String(tweet.retweetId) === String(retweet._id)) {
+            newEverthing.push({
+              _id: retweet._id,
+              retweeter: tweet.retweeter,
+              tweet: retweet.tweet,
+              date: retweet.date,
+              username: retweet.username
+            })
+          }
+        });
+      });
+
+      allTweets = allTweets.concat(newEverthing);
+
+      return response.json({
+          allTweets: allTweets
+        })
+
+      })
+      .catch(function(err) {
+        console.log('error:', err.message);
+      });
 
 });
 
@@ -168,7 +219,8 @@ app.post('/newtweet', function(request, response) {
   var addNewTweet = new Tweet({
     tweet: newTweet,
     date: moment().format('MMMM Do YYYY'),
-    username: userTweet
+    username: userTweet,
+    likes: []
   })
 
   addNewTweet.save();
@@ -202,6 +254,7 @@ app.post('/api/signup', function(request, response) {
         following: [],
         followers: [],
         likes: [],
+        retweets: [],
         avatar: "",
         token: ""
       })
@@ -531,15 +584,38 @@ app.put('/api/edit/likes', function(request, response) {
 
 });
 
-app.get('/api/retweet/:retweetid', function(request, response) {
+app.post('/api/retweet', function(request, response) {
 
-  var retweetId = request.params.retweetid;
+  var retweetId = request.body.retweetId;
+  var username = request.body.username;
 
-  console.log('retweet ID!', retweetId);
+  User.findOne({ _id: username})
+    .then(function(userInfo) {
+      var retweetsArr = userInfo.retweets;
 
-  return response.json({
-    message: 'success retweeting!!'
-  })
+      retweetsArr.push(retweetId);
+
+      console.log('USER INFO REWTEETING:', retweetsArr);
+
+      return User.update({
+        _id: username
+      }, {
+        $set: {
+          retweets: retweetsArr
+        }
+      });
+
+    })
+    .then(function(updatedRetweet) {
+      console.log('SUCCESS retweeting:', updatedRetweet);
+      return response.json({
+        message: 'success retweeting!!'
+      });
+    })
+    .catch(function(err) {
+      console.log('error trying to retweet:', err.message)
+    })
+
 });
 
 app.get('/api/search/:keyword', function(request, response) {

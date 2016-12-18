@@ -176,9 +176,6 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
     return $http({
       method: 'DELETE',
       url: url
-      // data: {
-      //   tweetId: tweetId
-      // }
     });
   }
 
@@ -238,10 +235,14 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   }
 
   service.retweeting = function(retweetId) {
-    var url = '/api/retweet/' + retweetId;
+    var url = '/api/retweet';
     return $http({
-      method: 'GET',
-      url: url
+      method: 'POST',
+      url: url,
+      data: {
+        retweetId: retweetId,
+        username: $rootScope.rootUsername
+      }
     })
   }
 
@@ -279,10 +280,11 @@ app.controller('SearchResultsController', function($scope, $stateParams, $rootSc
 
 app.controller('WorldController', function($scope, $rootScope, $state, TwitterFactory) {
 
-  $scope.retweet = function(tweeId) {
-    TwitterFactory.retweeting(tweeId)
-      .sucess(function(results) {
+  $scope.retweet = function(tweetId) {
+    TwitterFactory.retweeting(tweetId)
+      .success(function(results) {
         console.log('retweeting results::', results);
+        $state.reload();
       })
       .error(function() {
         console.log('error retweeting.....');
@@ -320,12 +322,6 @@ app.controller('WorldController', function($scope, $rootScope, $state, TwitterFa
       console.log('here is all the tweets for you:::', allTweets);
       $scope.allTweets = allTweets.allTweets;
       console.log('TWEETETETE', $rootScope.rootLikes);
-
-
-
-      // var index = $rootScope.rootLikes.indexOf('58541e6a228c3a0eaea6fad1');
-      // console.log('INDEX::', index);
-
     })
     .error(function(err) {
       console.log('error!!!', err);

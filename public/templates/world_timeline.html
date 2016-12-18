@@ -2,6 +2,7 @@
 
 <ul ng-repeat="tweet in allTweets">
   <li>
+    <span ng-if="tweet.retweeter">{{tweet.retweeter}} retweeted:</span><br>
     <strong>
       <a ui-sref="profile({ username: tweet.username})">{{tweet.username}}</a>
     </strong>
@@ -14,3 +15,18 @@
     </div>
   </li>
 </ul>
+
+<!-- <ul ng-repeat="tweet in allTweets">
+  <li>
+    <strong>
+      <a ui-sref="profile({ username: tweet.username})">{{tweet.username}}</a>
+    </strong>
+    tweeted: "{{tweet.tweet}}"
+    <div ng-show="rootUsername">
+      <i ng-show="(tweet.username !== rootUsername)" ng-click="retweet(tweet._id)" class="fa fa-retweet" aria-hidden="true"></i>
+      <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
+      <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
+      <button ng-show="rootUsername === tweet.username" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
+    </div>
+  </li>
+</ul> -->
