@@ -308,9 +308,17 @@ app.controller('WorldController', function($scope, $rootScope, $state, TwitterFa
       })
   }
 
-  $scope.likeTweet = function(isLiked, tweetId) {
+  $scope.likeTweet = function(likes, tweetId) {
     if ($rootScope.rootUsername) {
-      TwitterFactory.updateLikes(isLiked, tweetId)
+      console.log(likes);
+      var index = likes.indexOf($rootScope.rootUsername);
+
+      if (index === -1) {
+        $scope.isLiked = true;
+      } else {
+        $scope.isLiked = false;
+      }
+      TwitterFactory.updateLikes($scope.isLiked, tweetId)
         .success(function(likes) {
           console.log('sucess liking!!', likes);
           TwitterFactory.updateRootLikes(likes);
@@ -439,9 +447,18 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
       })
   }
 
-  $scope.likeTweet = function(isLiked, tweetId) {
+  $scope.likeTweet = function(likes, tweetId) {
     if ($rootScope.rootUsername) {
-      TwitterFactory.updateLikes(isLiked, tweetId)
+
+      var index = likes.indexOf($rootScope.rootUsername);
+
+      if (index === -1) {
+        $scope.isLiked = true;
+      } else {
+        $scope.isLiked = false;
+      }
+
+      TwitterFactory.updateLikes($scope.isLiked, tweetId)
         .success(function(likes) {
           console.log('success liking!!', likes);
           TwitterFactory.updateRootLikes(likes);

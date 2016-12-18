@@ -53,15 +53,15 @@ const User = mongoose.model('User', {
   following: [String],
   followers: [String],
   likes: [ObjectId],
-  retweets: [ObjectId],
   avatar: [String],
   token: String
 });
 
 const Tweet = mongoose.model('Tweet', {
   tweet: { type: String, required: true},
-  date: String,
+  date: Date,
   username: String,
+  retweeter: String,
   likes: [String]
 });
 
@@ -75,64 +75,73 @@ const AuthToken = mongoose.model('AuthToken', {
 // *******************************
 app.get('/timeline', function(request, response) {
 
-  bluebird.all([ Tweet.find().limit(20), User.find().limit(20)])
-    .spread(function(allTweets, allUsers) {
-
-      var allRetweetsArr = [];
-      var allRetweetsIds = [];
-
-      allUsers.forEach(function(user) {
-        console.log('each for each::', user.retweets);
-        if (user.retweets.length > 0) {
-          allRetweetsArr.push({ user: user._id, retweetId: user.retweets});
-          allRetweetsIds = allRetweetsIds.concat(user.retweets);
-        }
-      })
-
-      return [ allTweets, allRetweetsArr, Tweet.find({
-        _id: {
-          $in: allRetweetsIds
-        }
-      })]
-
-    })
-    .spread(function(allTweets, allRetweetsArr, allRetweets) {
-
-      var updatedArr = [];
-
-      allRetweetsArr.forEach(function(retweetObj) {
-        retweetObj.retweetId.forEach(function(retweetId) {
-          updatedArr.push({ retweeter: retweetObj.user, retweetId: retweetId});
-        })
-      })
-
-      var newEverthing = [];
-
-      updatedArr.forEach(function(tweet) {
-        allRetweets.forEach(function(retweet) {
-
-          if (String(tweet.retweetId) === String(retweet._id)) {
-            newEverthing.push({
-              _id: retweet._id,
-              retweeter: tweet.retweeter,
-              tweet: retweet.tweet,
-              date: retweet.date,
-              username: retweet.username
-            })
-          }
-        });
-      });
-
-      allTweets = allTweets.concat(newEverthing);
-
+  Tweet.find().limit(20)
+    .then(function(allTweets) {
       return response.json({
-          allTweets: allTweets
-        })
-
+        allTweets: allTweets
       })
-      .catch(function(err) {
-        console.log('error:', err.message);
-      });
+    })
+    .catch(function(err) {
+      console.log('error in world timeline', err.message);
+    })
+  // bluebird.all([ Tweet.find().limit(20), User.find().limit(20)])
+  //   .spread(function(allTweets, allUsers) {
+  //
+  //     var allRetweetsArr = [];
+  //     var allRetweetsIds = [];
+  //
+  //     allUsers.forEach(function(user) {
+  //       console.log('each for each::', user.retweets);
+  //       if (user.retweets.length > 0) {
+  //         allRetweetsArr.push({ user: user._id, retweetId: user.retweets});
+  //         allRetweetsIds = allRetweetsIds.concat(user.retweets);
+  //       }
+  //     })
+  //
+  //     return [ allTweets, allRetweetsArr, Tweet.find({
+  //       _id: {
+  //         $in: allRetweetsIds
+  //       }
+  //     })]
+  //
+  //   })
+  //   .spread(function(allTweets, allRetweetsArr, allRetweets) {
+  //
+  //     var updatedArr = [];
+  //
+  //     allRetweetsArr.forEach(function(retweetObj) {
+  //       retweetObj.retweetId.forEach(function(retweetId) {
+  //         updatedArr.push({ retweeter: retweetObj.user, retweetId: retweetId});
+  //       })
+  //     })
+  //
+  //     var newEverthing = [];
+  //
+  //     updatedArr.forEach(function(tweet) {
+  //       allRetweets.forEach(function(retweet) {
+  //
+  //         if (String(tweet.retweetId) === String(retweet._id)) {
+  //           newEverthing.push({
+  //             _id: retweet._id,
+  //             retweeter: tweet.retweeter,
+  //             tweet: retweet.tweet,
+  //             date: retweet.date,
+  //             username: retweet.username
+  //           })
+  //         }
+  //       });
+  //     });
+  //
+  //     allTweets = allTweets.concat(newEverthing);
+  //
+  //     return response.json({
+  //         allTweets: allTweets
+  //       })
+  //
+  //     })
+  //     .catch(function(err) {
+  //       console.log('error:', err.message);
+  //     });
 
 });
 
@@ -142,90 +151,128 @@ app.get('/timeline', function(request, response) {
 // *******************************
 app.get('/profile/:username', function(request, response) {
 
-  console.log('PROFILE:::', request.params);
+  // grab the username from the params (who's page we're on)
   var user_id = request.params.username;
 
+  // make a query to find the user info
   User.findOne({ _id: user_id})
     .then(function(userInfo) {
 
+      // add the user to his own following array
+      // because later we want to get all the tweets and retweets made
+      // by him and all of his followers
       var followingArr = userInfo.following.concat([user_id]);
 
-      // console.log('USER INFO:::', userInfo);
+      console.log('FFF', followingArr)
+      // return the user info because we still need it
+      // do a query to get all the tweets made by him and everyone he is following
+      // do another query to grab all the retweets made by him and everyone he is following
+      // do another query to grab all the user info from everyone he is following
       return [userInfo, Tweet.find({
-        username: {
+        $and: [
+          { username: {
+              $in: followingArr
+            }
+          }, {
+            retweeter: ""
+          }
+        ]
+      }), Tweet.find({
+        retweeter: {
           $in: followingArr
         }
-      }), User.find({
+      }),
+        User.find({
         _id: {
           $in: followingArr
         }
       })]
     })
-    .spread(function(userInfo, allTweets, allUserInfos) {
+    .spread(function(userInfo, allTweets, allRetweets, allUserInfos) {
       console.log('ALL USER INFO::', allUserInfos);
 
-      var allRetweets = [];
-      var allRetweetsIds = [];
+      console.log('All TWEETS:', allTweets);
 
-      allUserInfos.forEach(function(userInfo) {
-        userInfo.retweets.forEach(function(tweetId) {
-          allRetweets.push({ retweeter: userInfo._id, tweetId: tweetId });
-          allRetweetsIds.push(tweetId);
-        })
-      });
+      console.log('All retweets:', allRetweets);
 
-      console.log('ALL RETWEETS IDS HAHAHA', allRetweetsIds);
+      var tweetAndRetweets = allTweets.concat(allRetweets);
 
-      console.log('ALL RETWEETS ARRR!!!', allRetweets);
-
-      var userId = userInfo._id;
       var numUserTweets = 0;
-      allTweets.forEach(function(tweet) {
+      tweetAndRetweets.forEach(function(tweet) {
         var tweetUser = tweet.username;
-        if (tweetUser === userId) {
+        var retweeter = tweet.retweeter;
+        if ((tweetUser === user_id) || (retweeter === user_id)) {
           numUserTweets++;
         }
       });
-      console.log('ALLL TWEETS::', allTweets);
 
-      return [ userInfo, allTweets, numUserTweets, allRetweets, Tweet.find({
-        _id: {
-          $in: allRetweetsIds
-        }
-      }) ]
+      return response.json({
+        userInfo: userInfo,
+        allTweets: tweetAndRetweets,
+        numUserTweets: numUserTweets
+      })
+      // var allRetweets = [];
+      // var allRetweetsIds = [];
+      //
+      // allUserInfos.forEach(function(userInfo) {
+      //   userInfo.retweets.forEach(function(tweetId) {
+      //     allRetweets.push({ retweeter: userInfo._id, tweetId: tweetId });
+      //     allRetweetsIds.push(tweetId);
+      //   })
+      // });
+      //
+      // console.log('ALL RETWEETS IDS HAHAHA', allRetweetsIds);
+      //
+      // console.log('ALL RETWEETS ARRR!!!', allRetweets);
+      //
+      // var userId = userInfo._id;
+      // var numUserTweets = 0;
+      // allTweets.forEach(function(tweet) {
+      //   var tweetUser = tweet.username;
+      //   if (tweetUser === userId) {
+      //     numUserTweets++;
+      //   }
+      // });
+      // console.log('ALLL TWEETS::', allTweets);
+
+      // return [ userInfo, allTweets, numUserTweets, allRetweets, Tweet.find({
+      //   _id: {
+      //     $in: allRetweetsIds
+      //   }
+      // }) ]
 
 
     })
-    .spread(function(userInfo, allTweets, numUserTweets, allRetweetsArr, allRetweetsInfo) {
+    // .spread(function(userInfo, allTweets, numUserTweets, allRetweetsArr, allRetweetsInfo) {
 
-      var retweetArr = [];
-
-      allRetweetsArr.forEach(function(retweet) {
-        allRetweetsInfo.forEach(function(retweetInfo) {
-          if (String(retweet.tweetId) === String(retweetInfo._id)) {
-            retweetArr.push({
-              _id: retweetInfo._id,
-              retweeter: retweet.retweeter,
-              tweet: retweetInfo.tweet,
-              date: retweetInfo.date,
-              username: retweetInfo.username,
-              likes: retweetInfo.likes
-            })
-          }
-        });
-      });
-
-      allTweets = allTweets.concat(retweetArr);
+      // var retweetArr = [];
+      //
+      // allRetweetsArr.forEach(function(retweet) {
+      //   allRetweetsInfo.forEach(function(retweetInfo) {
+      //     if (String(retweet.tweetId) === String(retweetInfo._id)) {
+      //       retweetArr.push({
+      //         _id: retweetInfo._id,
+      //         retweeter: retweet.retweeter,
+      //         tweet: retweetInfo.tweet,
+      //         date: retweetInfo.date,
+      //         username: retweetInfo.username,
+      //         likes: retweetInfo.likes
+      //       })
+      //     }
+      //   });
+      // });
+      //
+      // allTweets = allTweets.concat(retweetArr);
 
       // console.log('NEWEST ARR!!:', allTweets);
       // console.log('All 00000 RETWEETS::', allRetweetsInfo);
 
-      return response.json({
-        userInfo: userInfo,
-        allTweets: allTweets,
-        numUserTweets: numUserTweets
-      })
-    })
+      // return response.json({
+      //   userInfo: userInfo,
+      //   allTweets: allTweets,
+      //   numUserTweets: numUserTweets
+      // })
+    // })
     .catch(function(err) {
       console.log('Error grabbing DOM and his following TWEETS::', err);
     });
@@ -268,15 +315,18 @@ app.get('/profile/:username', function(request, response) {
 // *******************************
 app.post('/newtweet', function(request, response) {
 
+// moment: moment().format('MMMM Do YYYY')
+
   var userTweet = request.body.username;
   var newTweet = request.body.newTweet;
 
   var addNewTweet = new Tweet({
     tweet: newTweet,
-    date: moment().format('MMMM Do YYYY'),
+    date: new Date(),
     username: userTweet,
+    retweeter: "",
     likes: []
-  })
+  });
 
   addNewTweet.save();
 
@@ -598,16 +648,16 @@ app.put('/api/edit/likes', function(request, response) {
     .then(function(userInfo) {
       var likesArr = userInfo.likes;
 
+      // add or remove the tweetId from the user's likes array
       if (isLiked) {
-        console.log('HMMMM', likesArr);
         likesArr.push(tweetId)
       } else {
         var removeIndex = likesArr.indexOf(tweetId);
         likesArr.splice(removeIndex, 1);
       }
 
-      console.log('LIKE OR NOT:', likesArr);
-
+      // make a query to update the user's like array in the db
+      // also return the likes array ??
       return [ User.update({
         _id: userId
       }, {
@@ -621,10 +671,6 @@ app.put('/api/edit/likes', function(request, response) {
 
       // want to add username to likes array in Tweet
       return [ Tweet.findOne({ _id: tweetId}), likesArr ];
-
-      // response.json({
-      //   likes: likesArr
-      // })
     })
     .spread(function(tweetInfo, likesArr) {
       console.log('tweet INFO::', tweetInfo);
@@ -659,29 +705,29 @@ app.put('/api/edit/likes', function(request, response) {
 });
 
 app.post('/api/retweet', function(request, response) {
+// FIX THIS PART TO include
+// date: moment().format('MMMM Do YYYY'),
 
   var retweetId = request.body.retweetId;
-  var username = request.body.username;
+  var retweeter = request.body.username;
 
-  User.findOne({ _id: username})
-    .then(function(userInfo) {
-      var retweetsArr = userInfo.retweets;
+  Tweet.findOne({ _id: retweetId })
+    .then(function(tweetInfo) {
+      console.log('tweet info:', tweetInfo);
 
-      retweetsArr.push(retweetId);
+      var newTweet = new Tweet({
+        tweet: tweetInfo.tweet,
+        date: new Date(),
+        username: tweetInfo.username,
+        retweeter: retweeter,
+        likes: [String]
+      })
 
-      console.log('USER INFO REWTEETING:', retweetsArr);
-
-      return User.update({
-        _id: username
-      }, {
-        $set: {
-          retweets: retweetsArr
-        }
-      });
+      return newTweet.save();
 
     })
-    .then(function(updatedRetweet) {
-      console.log('SUCCESS retweeting:', updatedRetweet);
+    .then(function(addedRetweet) {
+      console.log('SUCCESS retweeting:', addedRetweet);
       return response.json({
         message: 'success retweeting!!'
       });
@@ -689,6 +735,32 @@ app.post('/api/retweet', function(request, response) {
     .catch(function(err) {
       console.log('error trying to retweet:', err.message)
     })
+  // User.findOne({ _id: username})
+  //   .then(function(userInfo) {
+  //     var retweetsArr = userInfo.retweets;
+  //
+  //     retweetsArr.push(retweetId);
+  //
+  //     console.log('USER INFO REWTEETING:', retweetsArr);
+  //
+  //     return User.update({
+  //       _id: username
+  //     }, {
+  //       $set: {
+  //         retweets: retweetsArr
+  //       }
+  //     });
+  //
+  //   })
+  //   .then(function(updatedRetweet) {
+  //     console.log('SUCCESS retweeting:', updatedRetweet);
+  //     return response.json({
+  //       message: 'success retweeting!!'
+  //     });
+  //   })
+  //   .catch(function(err) {
+  //     console.log('error trying to retweet:', err.message)
+  //   })
 
 });
 

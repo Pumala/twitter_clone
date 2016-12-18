@@ -18,18 +18,19 @@
   <h2>Likes: {{numLikes}}</h2>
 </div>
 
-<ul ng-repeat="tweet in allTweets">
-  <li>
+<ul ng-repeat="tweet in allTweets | orderBy:'-date'">
+  <li class="well">
     <span class="retweeter" ng-if="tweet.retweeter">{{tweet.retweeter}} retweeted:</span><br>
     <a ui-sref="profile({username: tweet.username})">
       <strong>{{tweet.username}}</strong>
     </a>
-    tweeted: "{{tweet.tweet}}"
+    tweeted: "{{tweet.tweet}}"<br>
+    Date: {{tweet.date | date : "MMM dd y"}}
     <div>
-      <i ng-show="(tweet.username !== rootUsername)" ng-click="retweet(tweet._id)" class="fa fa-retweet" aria-hidden="true"></i>
-      <i ng-show="((tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)) || ((rootUsername === undefined) && (tweet.likes.length === 0))" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
-      <i ng-show="((tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)) || ((rootUsername === undefined) && (tweet.likes.length > 0))" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
-      <span>{{tweet.likes.length}}</span>
+      <i ng-click="retweet(tweet._id)" class="fa fa-retweet" aria-hidden="true"></i>
+      <i ng-show="(tweet.likes.length === 0)" class="fa fa-heart-o" ng-click="likeTweet(tweet.likes, tweet._id)" aria-hidden="true"></i>
+      <i ng-show="tweet.likes.length > 0" class="fa fa-heart" ng-click="likeTweet(tweet.likes, tweet._id)" aria-hidden="true"></i>
+      <span ng-show="tweet.likes.length > 0">{{tweet.likes.length}}</span>
       <button ng-show="tweet.username === rootUsername" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
     </div>
   </li>
