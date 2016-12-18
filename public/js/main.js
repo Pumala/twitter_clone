@@ -468,7 +468,8 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
       $scope.numTweets = allTweets.numUserTweets;
 
       $scope.allTweets = allTweets.allTweets;
-
+      console.log('username?', $scope.username);
+      console.log('rootScope???', $rootScope.rootUsername);
       if ($rootScope.rootUsername) {
         var followers = allTweets.userInfo.followers;
         // check if user if currently following this person

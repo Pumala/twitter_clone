@@ -11,6 +11,7 @@
       <i ng-show="(tweet.username !== rootUsername)" ng-click="retweet(tweet._id)" class="fa fa-retweet" aria-hidden="true"></i>
       <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
       <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
+      <span>{{tweet.likes.length}}</span>
       <button ng-show="rootUsername === tweet.username" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
     </div>
   </li>

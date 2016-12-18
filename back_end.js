@@ -563,6 +563,36 @@ app.put('/api/edit/likes', function(request, response) {
     })
     .spread(function(message, likesArr) {
       console.log('sucess updating likes!!!', message);
+
+      // want to add username to likes array in Tweet
+      return [ Tweet.findOne({ _id: tweetId}), likesArr ];
+
+      // response.json({
+      //   likes: likesArr
+      // })
+    })
+    .spread(function(tweetInfo, likesArr) {
+      console.log('tweet INFO::', tweetInfo);
+      var likes = tweetInfo.likes;
+      console.log('BEFORE LIKES ARR::', likes);
+
+      if (isLiked) {
+        likes.push(userId);
+      } else {
+        var removeIndex = likes.indexOf(userId);
+        likes.splice(removeIndex, 1);
+      }
+      console.log('AFTER LIKES ARR::', likes);
+      return [ Tweet.update({
+        _id: tweetId
+      }, {
+        $set: {
+          likes: likes
+        }
+      }), likesArr ];
+    })
+    .spread(function(status, likesArr) {
+      console.log('STATUS FIXING LIKES:', status);
       response.json({
         likes: likesArr
       })
@@ -570,17 +600,6 @@ app.put('/api/edit/likes', function(request, response) {
     .catch(function(err) {
       console.log('error liking...', err.message);
     });
-
-  // User.update({
-  //   _id: userId
-  // }, {
-  //   $set: {
-  //     likes
-  //   }
-  // })
-  //   .then(function(userInf))
-
-  console.log('catching the LIKES', data);
 
 });
 

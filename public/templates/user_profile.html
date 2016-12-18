@@ -1,6 +1,6 @@
 <h1>User Profile</h1>
 
-<div ng-show="username !== rootUsername && rootToken">
+<div ng-show="username !== rootUsername">
   <button ng-show="!isFollowing" ng-click="follow(username)" class="btn btn-success">follow</button>
   <button ng-show="isFollowing" ng-click="unfollow(username)" class="btn btn-success">unfollow</button>
 </div>
@@ -25,9 +25,10 @@
     </a>
     tweeted: "{{tweet.tweet}}"
     <div ng-show="rootUsername">
-      <i id="{{tweet._id}}" ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
-      <i id="{{tweet._id}}" ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
-      <button id="tweet._id" ng-show="tweet.username === rootUsername" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
+      <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) < 0)" class="fa fa-heart-o" ng-click="likeTweet(true, tweet._id)" aria-hidden="true"></i>
+      <i ng-show="(tweet.username !== rootUsername) && (rootLikes.indexOf(tweet._id) >= 0)" class="fa fa-heart" ng-click="likeTweet(false, tweet._id)" aria-hidden="true"></i>
+      <span>{{tweet.likes.length}}</span>
+      <button ng-show="tweet.username === rootUsername" ng-click="removeTweet(tweet._id)" class="btn btn-danger" name="button">Remove</button>
     </div>
   </li>
 </ul>
