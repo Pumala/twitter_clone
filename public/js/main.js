@@ -12,12 +12,6 @@ app.config(function($stateProvider, $urlRouterProvider) {
     controller: "WorldController"
   })
   .state({
-    name: "profile",
-    url: "/profile/{username}",
-    templateUrl: "templates/user_profile.html",
-    controller: "UserController"
-  })
-  .state({
     name: "signup",
     url: "/signup",
     templateUrl: "templates/signup.html",
@@ -28,6 +22,12 @@ app.config(function($stateProvider, $urlRouterProvider) {
     url: "/login",
     templateUrl: "templates/login.html",
     controller: "LoginController"
+  })
+  .state({
+    name: "profile",
+    url: "/{username}",
+    templateUrl: "templates/user_profile.html",
+    controller: "UserController"
   })
   .state({
     name: "search",
@@ -103,7 +103,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   }
 
   service.userProfile = function(username) {
-    var url = '/profile/' + username;
+    var url = '/api/profile/' + username;
     console.log('user anyone??', url);
 
     return $http({
@@ -113,7 +113,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   }
 
   service.addNewTweet = function(username, newTweet) {
-    var url = '/newtweet';
+    var url = '/api/newtweet';
     return $http({
       method: 'POST',
       url: url,
@@ -384,17 +384,22 @@ app.controller('LoginController', function($scope, $state, $cookies, $rootScope,
 
     TwitterFactory.submitLoginInfo(loginInfo)
       .success(function(userInfo) {
-        console.log('LOGEED IN OBJECT!!!!!! IMPOTENT!!!:', userInfo);
-        $cookies.putObject('cookieData', userInfo.userInfo)
-        // store user login infor in $rootScope variables
 
+        // check if there is an error
+        if (userInfo.error) {
+          // for now, reload the page
+          $state.reload();
+        } else {
+          // if the login was successful, save userInfo to cookiesData
+          $cookies.putObject('cookieData', userInfo.userInfo)
 
-        $rootScope.rootUsername = userInfo.username;
-        $rootScope.rootLikes = userInfo.userInfo.likes;
-        $rootScope.rootToken = userInfo.token;
-        $state.go('home');
-
-        // console.log('Random token and username:', userInfo);
+          // store user login infor in $rootScope variables
+          $rootScope.rootUsername = userInfo.username;
+          $rootScope.rootLikes = userInfo.userInfo.likes;
+          $rootScope.rootToken = userInfo.token;
+          // redirect to home page
+          $state.go('home');
+        }
 
       })
       .error(function(err) {
@@ -527,9 +532,6 @@ app.controller('UserController', function($scope, TwitterFactory, $state, $rootS
         } else {
           $scope.isFollowing = false;
         }
-        // followers.forEach(function(follower) {
-        //   if
-        // });
       } else {
         console.log('NOPE');
       }

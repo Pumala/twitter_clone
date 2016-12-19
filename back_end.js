@@ -23,25 +23,6 @@ app.use(express.static('public'));
 // NEW DB
 mongoose.connect('mongodb://localhost/master_twitter_db');
 
-// OLD MODELS
-// const User = mongoose.model('User', {
-//   _id: { type: String, required: true, unique: true},
-//   password: { type: String, required: true},
-//   following: [String],
-//   followers: [String]
-// });
-//
-// const Tweet = mongoose.model('Tweet', {
-//   tweet: { type: String, required: true},
-//   date: Date,
-//   username: String
-// });
-
-// come back to redirect
-// app.get('/', function(request, response) {
-//   response.redirect('http://google.com');
-// })
-
 // UPDATED MODELS
 const User = mongoose.model('User', {
   _id: { type: String, required: true, unique: true},
@@ -75,8 +56,10 @@ const AuthToken = mongoose.model('AuthToken', {
 // *******************************
 app.get('/timeline', function(request, response) {
 
+  // find 20 tweets in the db
   Tweet.find().limit(20)
     .then(function(allTweets) {
+      // send the array of objects (allTweets) to the front-end
       return response.json({
         allTweets: allTweets
       })
@@ -84,72 +67,13 @@ app.get('/timeline', function(request, response) {
     .catch(function(err) {
       console.log('error in world timeline', err.message);
     })
-  // bluebird.all([ Tweet.find().limit(20), User.find().limit(20)])
-  //   .spread(function(allTweets, allUsers) {
-  //
-  //     var allRetweetsArr = [];
-  //     var allRetweetsIds = [];
-  //
-  //     allUsers.forEach(function(user) {
-  //       console.log('each for each::', user.retweets);
-  //       if (user.retweets.length > 0) {
-  //         allRetweetsArr.push({ user: user._id, retweetId: user.retweets});
-  //         allRetweetsIds = allRetweetsIds.concat(user.retweets);
-  //       }
-  //     })
-  //
-  //     return [ allTweets, allRetweetsArr, Tweet.find({
-  //       _id: {
-  //         $in: allRetweetsIds
-  //       }
-  //     })]
-  //
-  //   })
-  //   .spread(function(allTweets, allRetweetsArr, allRetweets) {
-  //
-  //     var updatedArr = [];
-  //
-  //     allRetweetsArr.forEach(function(retweetObj) {
-  //       retweetObj.retweetId.forEach(function(retweetId) {
-  //         updatedArr.push({ retweeter: retweetObj.user, retweetId: retweetId});
-  //       })
-  //     })
-  //
-  //     var newEverthing = [];
-  //
-  //     updatedArr.forEach(function(tweet) {
-  //       allRetweets.forEach(function(retweet) {
-  //
-  //         if (String(tweet.retweetId) === String(retweet._id)) {
-  //           newEverthing.push({
-  //             _id: retweet._id,
-  //             retweeter: tweet.retweeter,
-  //             tweet: retweet.tweet,
-  //             date: retweet.date,
-  //             username: retweet.username
-  //           })
-  //         }
-  //       });
-  //     });
-  //
-  //     allTweets = allTweets.concat(newEverthing);
-  //
-  //     return response.json({
-  //         allTweets: allTweets
-  //       })
-  //
-  //     })
-  //     .catch(function(err) {
-  //       console.log('error:', err.message);
-  //     });
 
 });
 
-// PRACTICE
-// ********************************
+// ***************************************
 //          USER TIMELINE/PROFILE
-// *******************************
-app.get('/profile/:username', function(request, response) {
+// ***************************************
+app.get('/api/profile/:username', function(request, response) {
 
   // grab the username from the params (who's page we're on)
   var user_id = request.params.username;
@@ -160,10 +84,9 @@ app.get('/profile/:username', function(request, response) {
 
       // add the user to his own following array
       // because later we want to get all the tweets and retweets made
-      // by him and all of his followers
+      // by him and everyone he's following
       var followingArr = userInfo.following.concat([user_id]);
 
-      console.log('FFF', followingArr)
       // return the user info because we still need it
       // do a query to get all the tweets made by him and everyone he is following
       // do another query to grab all the retweets made by him and everyone he is following
@@ -189,137 +112,47 @@ app.get('/profile/:username', function(request, response) {
       })]
     })
     .spread(function(userInfo, allTweets, allRetweets, allUserInfos) {
-      console.log('ALL USER INFO::', allUserInfos);
 
-      console.log('All TWEETS:', allTweets);
-
-      console.log('All retweets:', allRetweets);
-
+      // save all the tweets and retweets to tweetAndRetweets variable
       var tweetAndRetweets = allTweets.concat(allRetweets);
 
+      // create a new variable and give it the value of 0
       var numUserTweets = 0;
+      // loop through all the tweets and retweets
       tweetAndRetweets.forEach(function(tweet) {
         var tweetUser = tweet.username;
         var retweeter = tweet.retweeter;
-        if ((tweetUser === user_id) || (retweeter === user_id)) {
+        // if the original tweet was written by the user or if the retweet was retweeted by the user
+        if (((tweetUser === user_id) && (retweeter === "")) || (retweeter === user_id)) {
+          // then increment the numUserTweets count by 1
           numUserTweets++;
         }
       });
 
+      // pass the userInfo, all the tweets and retweets, and numUserTweets to the front-end
       return response.json({
         userInfo: userInfo,
         allTweets: tweetAndRetweets,
         numUserTweets: numUserTweets
       })
-      // var allRetweets = [];
-      // var allRetweetsIds = [];
-      //
-      // allUserInfos.forEach(function(userInfo) {
-      //   userInfo.retweets.forEach(function(tweetId) {
-      //     allRetweets.push({ retweeter: userInfo._id, tweetId: tweetId });
-      //     allRetweetsIds.push(tweetId);
-      //   })
-      // });
-      //
-      // console.log('ALL RETWEETS IDS HAHAHA', allRetweetsIds);
-      //
-      // console.log('ALL RETWEETS ARRR!!!', allRetweets);
-      //
-      // var userId = userInfo._id;
-      // var numUserTweets = 0;
-      // allTweets.forEach(function(tweet) {
-      //   var tweetUser = tweet.username;
-      //   if (tweetUser === userId) {
-      //     numUserTweets++;
-      //   }
-      // });
-      // console.log('ALLL TWEETS::', allTweets);
-
-      // return [ userInfo, allTweets, numUserTweets, allRetweets, Tweet.find({
-      //   _id: {
-      //     $in: allRetweetsIds
-      //   }
-      // }) ]
-
 
     })
-    // .spread(function(userInfo, allTweets, numUserTweets, allRetweetsArr, allRetweetsInfo) {
-
-      // var retweetArr = [];
-      //
-      // allRetweetsArr.forEach(function(retweet) {
-      //   allRetweetsInfo.forEach(function(retweetInfo) {
-      //     if (String(retweet.tweetId) === String(retweetInfo._id)) {
-      //       retweetArr.push({
-      //         _id: retweetInfo._id,
-      //         retweeter: retweet.retweeter,
-      //         tweet: retweetInfo.tweet,
-      //         date: retweetInfo.date,
-      //         username: retweetInfo.username,
-      //         likes: retweetInfo.likes
-      //       })
-      //     }
-      //   });
-      // });
-      //
-      // allTweets = allTweets.concat(retweetArr);
-
-      // console.log('NEWEST ARR!!:', allTweets);
-      // console.log('All 00000 RETWEETS::', allRetweetsInfo);
-
-      // return response.json({
-      //   userInfo: userInfo,
-      //   allTweets: allTweets,
-      //   numUserTweets: numUserTweets
-      // })
-    // })
     .catch(function(err) {
       console.log('Error grabbing DOM and his following TWEETS::', err);
     });
 
 });
 
-// WORKS
-// // ********************************
-// //          USER TIMELINE/PROFILE
-// // *******************************
-// app.get('/profile', function(request, response) {
-//
-//   // hard code IAmDom's _id
-//   var user_id = "IAmDom";
-//
-//   User.findOne({ _id: user_id})
-//     .then(function(userInfo) {
-//       console.log('USER INFO:::', userInfo);
-//       return [userInfo, Tweet.find({
-//         username: {
-//           $in: userInfo.following.concat([user_id])
-//         }
-//       })]
-//     })
-//     .spread(function(userInfo, allTweets) {
-//       console.log('userinfo HERE::', userInfo);
-//       console.log('YOOHOO::', allTweets);
-//       return response.json({
-//         allTweets: allTweets
-//       })
-//     })
-//     .catch(function(err) {
-//       console.log('Error grabbing DOM and his following TWEETS::', err);
-//     });
-//
-// });
-
-// ********************************
+// ***************************************
 //          USER TIMELINE/PROFILE
-// *******************************
-app.post('/newtweet', function(request, response) {
+// ***************************************
+app.post('/api/newtweet', function(request, response) {
 
-// moment: moment().format('MMMM Do YYYY')
-
+  // save the username and newTweet to variable
   var userTweet = request.body.username;
   var newTweet = request.body.newTweet;
 
+  // create a new instance of Tweet
   var addNewTweet = new Tweet({
     tweet: newTweet,
     date: new Date(),
@@ -328,6 +161,7 @@ app.post('/newtweet', function(request, response) {
     likes: []
   });
 
+  // save it the db
   addNewTweet.save();
 
   return response.json({
@@ -336,19 +170,26 @@ app.post('/newtweet', function(request, response) {
 
 });
 
+// ********************************
+//          USER SIGNUP
+// *******************************
 app.post('/api/signup', function(request, response) {
-  console.log('NEW SINGUP PPL:', request.body);
+
+  // save the signup info to variables
   var username = request.body.username;
   var password = request.body.password;
   var firstName = request.body.firstName;
   var lastName = request.body.lastName;
   var email = request.body.email;
 
+  // generate a salt
   bcrypt.genSalt(saltRounds)
     .then(function(salt) {
+      // return an encrypted password
       return bcrypt.hash(password, salt);
     })
     .then(function(hash) {
+      // create a new instance of User
       var newUser = new User({
         _id: username,
         firstName: firstName,
@@ -362,28 +203,34 @@ app.post('/api/signup', function(request, response) {
         retweets: [],
         avatar: "",
         token: ""
-      })
-      newUser.save();
+      });
+
+      // save the new user to the db
+      return newUser.save();
+
+    })
+    .then(function(saved) {
+      response.json({
+        message: 'Saved new user!'
+      });
     })
     .catch(function(err) {
       console.log('error bcrypting!', err.message);
     })
 
-  return response.json({
-    message: 'YAY!'
-  });
-
 });
 
+// ******************************************
+//          USER LOGOUT - REMOVE TOKEN
+// ******************************************
 app.delete('/api/logout/:tokenid', function(request, response) {
 
   var tokenId = request.params.tokenid;
-  console.log('you requested token::', tokenId);
 
-  // refactor this soon!!!!
+  // remove the token when user logouts
   AuthToken.remove({ _id: tokenId })
     .then(function(updatedToken) {
-      // console.log('updated the token?', updatedToken);
+      // update user info and set token to an empty string
       return User.update({
         token: tokenId
       }, {
@@ -393,7 +240,6 @@ app.delete('/api/logout/:tokenid', function(request, response) {
       })
     })
     .then(function(updatedUser) {
-      console.log('updated the user?', updatedUser);
       response.json({
         message: 'SUCCESS deleting token'
       });
@@ -404,43 +250,50 @@ app.delete('/api/logout/:tokenid', function(request, response) {
 
 });
 
+// *****************************************
+//          USER TIMELINE/PROFILE
+// *****************************************
 app.put('/api/login', function(request, response) {
 
+  // save username and password to variables
   var username = request.body.username;
   var password = request.body.password;
-  console.log('REQUESTED::', request.body);
 
+  // make a query to find the user info
   User.find({ _id: username })
     .then(function(userInfo) {
+      // get the encrypted password from the db that matches the user
       var hash = userInfo[0].password;
+      // compare the password with the encrypted password
       return bcrypt.compare(password, hash);
     })
     .then(function(results) {
-      var message = "";
-      // check if results is true
+
+      // check if the passwords are a match or not
       if (results) {
-        message = 'SUCESSS';
+        // if so, generate a random token
+        var randomToken = uuidV4();
+
+        // add 30 days
+        var addThirtyDays = moment().add(30, 'days').format('MM-DD-YYYY');
+
+        // insert new entry in AuthToken model
+        var newToken = new AuthToken({
+          _id: randomToken,
+          expires: addThirtyDays
+        })
+
+        return newToken.save();
       } else {
-        message = 'FAIL';
+        return response.json({
+          error: 'passwords do not match'
+        })
       }
-      // generates a random token
-      var randomToken = uuidV4();
-      console.log('TOKEN::', randomToken);
-
-      var addThirty = moment().add(30, 'days').format('MM-DD-YYYY')
-      console.log('ADD 30 days', addThirty);
-
-      // insert new entry in AuthToken model
-      var newToken = new AuthToken({
-        _id: randomToken,
-        expires: moment().add(30, 'days').format('MM-DD-YYYY')
-      })
-
-      return newToken.save();
     })
     .then(function(token) {
-      // console.log('saved token', token);
       // update user model to include token
+      // also make query to find User Info
+      // pass in token expiration date and token id
       return [ User.update({
           _id: username
         }, {
@@ -448,29 +301,8 @@ app.put('/api/login', function(request, response) {
             token: token._id
           }
         }), User.findOne({ _id: username }), token.expires, token._id];
-      // return [
-      //   User.update({
-      //     _id: username
-      //   }, {
-      //     $set: {
-      //       token: randomToken
-      //     }
-      //   }),
-      //   username,
-      //   randomToken
-      // ]
-      // response.json({
-      //   // pass in request.body which is an Object
-      //   // storing username and password
-      //   username: username,
-      //   token: randomToken
-      // })
     })
     .spread(function(updated, userInfo, expires, token) {
-      // console.log('i was updated i think', updated);
-      // console.log('i was updated i think', userInfo);
-      // console.log('i was updated i think', expires);
-      // console.log('i was updated i think', token);
       response.json({
         username: username,
         userInfo: userInfo,
@@ -479,64 +311,56 @@ app.put('/api/login', function(request, response) {
           expires: expires
         }
       });
-      // response.send('ok');
     })
-    // .spread(function(updated, username, randomToken) {
-    //   console.log('updated: ', updated);
-    //   console.log('username: ', username);
-    //   console.log('randomToken: ', randomToken);
-    //
-    //   response.json({
-    //     // pass in request.body which is an Object
-    //     // storing username and password
-    //     username: username,
-    //     token: randomToken
-    //   })
-    // })
     .catch(function(err) {
       console.log('Error checking login info:', err.message);
       response.send({ error: err.message });
-    })
+    });
 
 });
 
+// *****************************************
+//          Unfollow User
+// *****************************************
 app.put('/api/unfollow', function(request, response) {
 
   var wasFollowing = request.body.wasFollowing;
   var user_id = request.body.user_id;
 
+  // make 2 queries:
+  // 1) get the user info
+  // 2) get who the user was following info
   bluebird.all([
     User.findOne({
-    _id: user_id
-  }),
-  User.findOne({
-    _id: wasFollowing
-  })])
+      _id: user_id
+      }),
+      User.findOne({
+        _id: wasFollowing
+      })
+    ])
     .spread(function(userInfo, wasFollowingInfo) {
-      console.log('user info::', userInfo.following);
-      console.log('wasFollowing info::', wasFollowingInfo);
 
       // assign the array of who the user is following to a variable
       var following = userInfo.following;
+
       // assign the array of who were the followers of who the user was following to a variable
       var followers = wasFollowingInfo.followers;
 
       // remove user from the following array because he is no longer following the person
+      // first, get the index
       var followingIndex = following.indexOf(wasFollowing);
-      // console.log('index was::', removeIndex);
 
-      // remove who he was following from the following array
+      // use the index to remove him from the following array
       following.splice(followingIndex, 1);
 
+      // remove user from the followers array because he is no longer a followers
+      // first, get the index
       var followerIndex = followers.indexOf(user_id);
 
-      // console.log('the followerindex', followerIndex);
-
+      // use the index to remove him from the followers array
       followers.splice(followerIndex, 1);
 
-      // console.log('the followers::', followers);
-      //
-      // console.log('killed it the following', following);
+      // make queries to update the db
       return [ User.update({
           _id: user_id
         }, {
@@ -555,20 +379,19 @@ app.put('/api/unfollow', function(request, response) {
 
     })
     .spread(function(updated) {
-      console.log('updated?', updated);
       response.json({
         message: 'it was a success unfollowing!'
       })
     })
     .catch(function(err) {
       console.log('err trying to unfollow::', err);
-    })
-  // console.log('I was following him::', wasFollowing);
-
-
+    });
 
 });
 
+// *****************************************
+//          FOLLOW User
+// *****************************************
 app.put('/api/follow', function(request, response) {
 
   var user_id = request.body.user_id;
@@ -577,10 +400,11 @@ app.put('/api/follow', function(request, response) {
   // make a promise => grab 2 different values
   // 1) find current User info
   // 2) find the info of the user that the current User is following
-  bluebird.all([ User.findOne({ _id: user_id}), User.findOne({ _id: whoUserFollows})])
+  bluebird.all([
+      User.findOne({ _id: user_id}),
+      User.findOne({ _id: whoUserFollows})
+    ])
     .spread(function(userInfo, followingInfo) {
-      // console.log('USER INFO:', userInfo);
-      // console.log('FOLLOWING INFO:', followingInfo);
 
       // modify the current User's following array to include the new user he is following
       var following = userInfo.following.concat([whoUserFollows]);
@@ -588,6 +412,7 @@ app.put('/api/follow', function(request, response) {
       // add the current user to his followers array
       var followers = followingInfo.followers.concat([user_id]);
 
+      // update the db
       return [ User.update({
           _id: user_id
         }, {
@@ -604,9 +429,6 @@ app.put('/api/follow', function(request, response) {
       ]
     })
     .spread(function(following, follower) {
-      // console.log('it was a success!!');
-      // console.log('FOLOWING:', following);
-      // console.log('FOLOWerrrr:', follower);
       return response.json({
         message: 'it was a success following!!'
       })
@@ -617,13 +439,16 @@ app.put('/api/follow', function(request, response) {
 
 })
 
+// *****************************************
+//              REMOVE TWEET
+// *****************************************
 app.delete('/api/remove/:tweetid', function(request, response) {
 
   var tweetId = request.params.tweetid;
 
+  // remove tweet from db
   Tweet.remove({ _id: tweetId })
     .then(function(status) {
-      console.log('SUCCESS DELETING TWEET');
       response.json({
         message: 'SUCCESS DELETING TWEET'
       })
@@ -634,66 +459,58 @@ app.delete('/api/remove/:tweetid', function(request, response) {
 
 });
 
+// *****************************************
+//           EDIT LIKES (LIKE OR UNLIKE)
+// *****************************************
 app.put('/api/edit/likes', function(request, response) {
 
-  console.log('data from likes::', request.body);
   var data = request.body;
   var isLiked = data.isLiked;
   var userId = data.username;
   var tweetId = data.tweetId;
-
+  console.log('like??', isLiked);
   // first, use userId to find the userInfo
   // we want to grab his likes array
-  User.findOne({ _id: userId})
-    .then(function(userInfo) {
-      var likesArr = userInfo.likes;
+  bluebird.all([
+      User.findOne({ _id: userId}),
+      Tweet.findOne({ _id: tweetId})
+    ])
+    .spread(function(userInfo, tweetInfo) {
+
+      var userLikesArr = userInfo.likes;
+      var tweetLikes = tweetInfo.likes;
 
       // add or remove the tweetId from the user's likes array
+      // add or remove the user from the tweet's likes array
       if (isLiked) {
-        likesArr.push(tweetId)
+        userLikesArr.push(tweetId);
+        tweetLikes.push(userId);
       } else {
-        var removeIndex = likesArr.indexOf(tweetId);
-        likesArr.splice(removeIndex, 1);
+        var removeTweetIndex = userLikesArr.indexOf(tweetId);
+        userLikesArr.splice(removeTweetIndex, 1);
+
+        var removeUserIndex = tweetLikes.indexOf(userId);
+        tweetLikes.splice(removeUserIndex, 1);
       }
 
-      // make a query to update the user's like array in the db
+      // make a query to update the user's like array  and tweet's like array in the db
       // also return the likes array ??
       return [ User.update({
         _id: userId
       }, {
         $set: {
-          likes: likesArr
+          likes: userLikesArr
         }
-      }), likesArr ];
-    })
-    .spread(function(message, likesArr) {
-      console.log('sucess updating likes!!!', message);
-
-      // want to add username to likes array in Tweet
-      return [ Tweet.findOne({ _id: tweetId}), likesArr ];
-    })
-    .spread(function(tweetInfo, likesArr) {
-      console.log('tweet INFO::', tweetInfo);
-      var likes = tweetInfo.likes;
-      console.log('BEFORE LIKES ARR::', likes);
-
-      if (isLiked) {
-        likes.push(userId);
-      } else {
-        var removeIndex = likes.indexOf(userId);
-        likes.splice(removeIndex, 1);
-      }
-      console.log('AFTER LIKES ARR::', likes);
-      return [ Tweet.update({
+      }), Tweet.update({
         _id: tweetId
       }, {
         $set: {
-          likes: likes
+          likes: tweetLikes
         }
-      }), likesArr ];
+      }), userLikesArr ];
+
     })
-    .spread(function(status, likesArr) {
-      console.log('STATUS FIXING LIKES:', status);
+    .spread(function(userUpdate, tweetUpdate, likesArr) {
       response.json({
         likes: likesArr
       })
@@ -704,6 +521,9 @@ app.put('/api/edit/likes', function(request, response) {
 
 });
 
+// *****************************************
+//           Add Retweet
+// *****************************************
 app.post('/api/retweet', function(request, response) {
 // FIX THIS PART TO include
 // date: moment().format('MMMM Do YYYY'),
@@ -711,10 +531,11 @@ app.post('/api/retweet', function(request, response) {
   var retweetId = request.body.retweetId;
   var retweeter = request.body.username;
 
+  // make a query to grab the tweet info
   Tweet.findOne({ _id: retweetId })
     .then(function(tweetInfo) {
-      console.log('tweet info:', tweetInfo);
 
+      // create a new instance of tweet
       var newTweet = new Tweet({
         tweet: tweetInfo.tweet,
         date: new Date(),
@@ -723,11 +544,11 @@ app.post('/api/retweet', function(request, response) {
         likes: [String]
       })
 
+      // save it to the db
       return newTweet.save();
 
     })
     .then(function(addedRetweet) {
-      console.log('SUCCESS retweeting:', addedRetweet);
       return response.json({
         message: 'success retweeting!!'
       });
@@ -735,35 +556,12 @@ app.post('/api/retweet', function(request, response) {
     .catch(function(err) {
       console.log('error trying to retweet:', err.message)
     })
-  // User.findOne({ _id: username})
-  //   .then(function(userInfo) {
-  //     var retweetsArr = userInfo.retweets;
-  //
-  //     retweetsArr.push(retweetId);
-  //
-  //     console.log('USER INFO REWTEETING:', retweetsArr);
-  //
-  //     return User.update({
-  //       _id: username
-  //     }, {
-  //       $set: {
-  //         retweets: retweetsArr
-  //       }
-  //     });
-  //
-  //   })
-  //   .then(function(updatedRetweet) {
-  //     console.log('SUCCESS retweeting:', updatedRetweet);
-  //     return response.json({
-  //       message: 'success retweeting!!'
-  //     });
-  //   })
-  //   .catch(function(err) {
-  //     console.log('error trying to retweet:', err.message)
-  //   })
 
 });
 
+// *****************************************
+//           SEARCH FOR USERS
+// *****************************************
 app.get('/api/search/:keyword', function(request, response) {
   // var search = request.params.keyword;
 
