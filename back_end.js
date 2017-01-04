@@ -26,9 +26,9 @@ mongoose.connect('mongodb://localhost/master_twitter_db');
 // UPDATED MODELS
 const User = mongoose.model('User', {
   _id: { type: String, required: true, unique: true},
-  firstName: { type: String, required: true, unique: true},
-  lastName: { type: String, required: true, unique: true},
-  password: { type: String, required: true},
+  firstName: { type: String, required: true},
+  lastName: { type: String, required: true},
+  password: { type: String },
   email: { type: String, required: true},
   joined: String,
   following: [String],
@@ -251,7 +251,7 @@ app.delete('/api/logout/:tokenid', function(request, response) {
 });
 
 // *****************************************
-//          USER TIMELINE/PROFILE
+//          USER LOGIN / TIMELINE / PROFILE
 // *****************************************
 app.put('/api/login', function(request, response) {
 
@@ -563,11 +563,14 @@ app.post('/api/retweet', function(request, response) {
 //           SEARCH FOR USERS
 // *****************************************
 app.get('/api/search/:keyword', function(request, response) {
-  // var search = request.params.keyword;
+  var search = request.params.keyword;
 
   // hardcode the search value as win until gaining understanding of regex
 
+  var newSearch = new RegExp(".*" + search + ".*", "g");
+  console.log('reg ex value::', newSearch);
   User.find({ _id: /.*win.*/ })
+  User.find({ _id: newSearch })
     .then(function(results) {
       console.log('found results for :::', results);
       var allUsers = [];

@@ -46,6 +46,7 @@ app.factory('TwitterFactory', function($http, $rootScope, $state, $cookies) {
   var service = {};
 
   // set it to cookieData if it exists, else null
+  // using ternary operator
   $rootScope.factoryCookieData = $cookies.getObject('cookieData') ? $cookies.getObject('cookieData') : null;
 
   // check if user is logged in
